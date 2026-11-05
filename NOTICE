@@ -1,0 +1,10 @@
+capnp-compiler
+
+The behaviour of this compiler — grammar, name resolution, type-id derivation and the struct layout
+algorithm — follows the Cap'n Proto reference compiler (C++), which we read to understand and then
+re-implemented in Rust:
+
+  Cap'n Proto — Copyright (c) 2013-2017 Sandstorm Development Group, Inc.; Cloudflare, Inc.;
+  and other contributors. Licensed under the MIT License. https://capnproto.org
+
+Thank you to everyone who built Cap'n Proto and capnproto-rust.
