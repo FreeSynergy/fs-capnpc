@@ -4,3 +4,6 @@ pub mod ast;
 pub mod error;
 pub mod lexer;
 pub mod parser;
+#[allow(clippy::all, clippy::pedantic)]
+#[rustfmt::skip]
+pub mod schema_capnp;
