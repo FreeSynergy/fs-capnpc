@@ -39,4 +39,4 @@ Versions: `capnp` 0.27.3, `capnpc` 0.27.0 (newest on crates.io, 2026-11); `capnp
 - M1 lexer; M2 parser/AST; M3 ids + resolution + imports; M4 translation incl. struct layout; M5 constants/defaults/annotations/generics; M6 request emission + CLI + full oracle; M7 docs / metadata.
 
 ## State
-- M1 lexer done (src/lexer.rs, src/error.rs, 7 unit tests).
+- M1 lexer done (src/lexer.rs, src/error.rs). M2 parser + AST done (src/ast.rs, src/parser.rs). 11 unit tests.
