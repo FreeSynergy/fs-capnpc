@@ -55,7 +55,12 @@ impl Enc {
             Ptr::Null => {}
             Ptr::Struct(sv) => {
                 let pos = self.encode_struct_body(sv);
-                self.words[slot] = Self::ptr_word(slot, pos, 0, sv.data_words as u32 | ((sv.pointer_count as u32) << 16));
+                self.words[slot] = Self::ptr_word(
+                    slot,
+                    pos,
+                    0,
+                    sv.data_words as u32 | ((sv.pointer_count as u32) << 16),
+                );
             }
             Ptr::Text(t) => {
                 let mut b = t.clone();
@@ -98,7 +103,8 @@ impl Enc {
                         4 => 4,
                         _ => 5,
                     };
-                    self.words[slot] = Self::ptr_word(slot, pos, 1, code | ((values.len() as u32) << 3));
+                    self.words[slot] =
+                        Self::ptr_word(slot, pos, 1, code | ((values.len() as u32) << 3));
                 }
                 ListVal::Pointers(ps) => {
                     let pos = self.alloc(ps.len());
@@ -107,7 +113,11 @@ impl Enc {
                     }
                     self.words[slot] = Self::ptr_word(slot, pos, 1, 6 | ((ps.len() as u32) << 3));
                 }
-                ListVal::Structs { data_words, pointer_count, elems } => {
+                ListVal::Structs {
+                    data_words,
+                    pointer_count,
+                    elems,
+                } => {
                     let per = *data_words as usize + *pointer_count as usize;
                     let pos = self.alloc(1 + elems.len() * per);
                     self.words[pos] = Self::ptr_word(pos, elems.len(), 0, 0) & 0xffff_ffff
@@ -122,7 +132,8 @@ impl Enc {
                             self.encode(p, base + *data_words as usize + j);
                         }
                     }
-                    self.words[slot] = Self::ptr_word(slot, pos, 1, 7 | (((elems.len() * per) as u32) << 3));
+                    self.words[slot] =
+                        Self::ptr_word(slot, pos, 1, 7 | (((elems.len() * per) as u32) << 3));
                 }
             },
         }
@@ -144,9 +155,12 @@ fn flat_message(ptr: &Ptr) -> Vec<u8> {
 
 fn set_any_pointer(mut target: capnp::any_pointer::Builder<'_>, ptr: &Ptr) {
     let bytes = flat_message(ptr);
-    let reader = capnp::serialize::read_message(&mut &bytes[..], ReaderOptions::new()).expect("flat message");
+    let reader = capnp::serialize::read_message(&mut &bytes[..], ReaderOptions::new())
+        .expect("flat message");
     let root: capnp::any_pointer::Reader = reader.get_root().expect("root");
-    target.set_as::<capnp::any_pointer::Owned>(root).expect("copy value");
+    target
+        .set_as::<capnp::any_pointer::Owned>(root)
+        .expect("copy value");
 }
 
 // ------------------------------------------------------------------------------------------
@@ -202,7 +216,10 @@ fn write_type(mut b: sc::type_::Builder<'_>, t: &Type) {
                         Unconstrained::Capability => un.set_capability(()),
                     }
                 }
-                AnyPointer::Parameter { scope_id, parameter_index } => {
+                AnyPointer::Parameter {
+                    scope_id,
+                    parameter_index,
+                } => {
                     let mut p = a.init_parameter();
                     p.set_scope_id(*scope_id);
                     p.set_parameter_index(*parameter_index);
@@ -285,7 +302,10 @@ fn write_value(mut b: sc::value::Builder<'_>, v: &Value) {
     }
 }
 
-fn write_annotations<'a>(b: impl FnOnce(u32) -> capnp::struct_list::Builder<'a, sc::annotation::Owned>, anns: &[Annotation]) {
+fn write_annotations<'a>(
+    b: impl FnOnce(u32) -> capnp::struct_list::Builder<'a, sc::annotation::Owned>,
+    anns: &[Annotation],
+) {
     if anns.is_empty() {
         return;
     }
@@ -352,7 +372,9 @@ fn write_node(mut b: sc::node::Builder<'_>, n: &Node) {
         NodeKind::Interface(iface) => {
             let mut ib = b.init_interface();
             {
-                let mut l = ib.reborrow().init_superclasses(iface.superclasses.len() as u32);
+                let mut l = ib
+                    .reborrow()
+                    .init_superclasses(iface.superclasses.len() as u32);
                 for (i, s) in iface.superclasses.iter().enumerate() {
                     let mut x = l.reborrow().get(i as u32);
                     x.set_id(s.id);
@@ -365,7 +387,9 @@ fn write_node(mut b: sc::node::Builder<'_>, n: &Node) {
                 x.set_name(m.name.as_str());
                 x.set_code_order(m.code_order);
                 {
-                    let mut ip = x.reborrow().init_implicit_parameters(m.implicit_parameters.len() as u32);
+                    let mut ip = x
+                        .reborrow()
+                        .init_implicit_parameters(m.implicit_parameters.len() as u32);
                     for (j, p) in m.implicit_parameters.iter().enumerate() {
                         ip.reborrow().get(j as u32).set_name(p.as_str());
                     }
@@ -407,7 +431,12 @@ fn write_field(mut f: sc::field::Builder<'_>, fld: &Field) {
     write_annotations(|c| f.reborrow().init_annotations(c), &fld.annotations);
     f.set_discriminant_value(fld.discriminant_value);
     match &fld.kind {
-        FieldKind::Slot { offset, ty, default_value, had_explicit_default } => {
+        FieldKind::Slot {
+            offset,
+            ty,
+            default_value,
+            had_explicit_default,
+        } => {
             let mut s = f.reborrow().init_slot();
             s.set_offset(*offset);
             write_type(s.reborrow().init_type(), ty);
@@ -462,24 +491,34 @@ pub fn build_request(out: &CompileOutput) -> Msg {
                     let root = scratch.init_root::<sc::node::Builder>();
                     write_node(root, n);
                 }
-                let reader = scratch.get_root_as_reader::<sc::node::Reader>().expect("scratch node");
+                let reader = scratch
+                    .get_root_as_reader::<sc::node::Reader>()
+                    .expect("scratch node");
                 nodes.set_with_caveats(i as u32, reader).expect("copy node");
             }
         }
         {
-            let mut infos = req.reborrow().init_source_info(out.source_info.len() as u32);
+            let mut infos = req
+                .reborrow()
+                .init_source_info(out.source_info.len() as u32);
             for (i, si) in out.source_info.iter().enumerate() {
                 let mut scratch = Msg::new_default();
                 {
                     let root = scratch.init_root::<sc::node::source_info::Builder>();
                     write_source_info(root, si);
                 }
-                let reader = scratch.get_root_as_reader::<sc::node::source_info::Reader>().expect("scratch si");
-                infos.set_with_caveats(i as u32, reader).expect("copy source info");
+                let reader = scratch
+                    .get_root_as_reader::<sc::node::source_info::Reader>()
+                    .expect("scratch si");
+                infos
+                    .set_with_caveats(i as u32, reader)
+                    .expect("copy source info");
             }
         }
         {
-            let mut files = req.reborrow().init_requested_files(out.requested_files.len() as u32);
+            let mut files = req
+                .reborrow()
+                .init_requested_files(out.requested_files.len() as u32);
             for (i, f) in out.requested_files.iter().enumerate() {
                 let mut fb = files.reborrow().get(i as u32);
                 fb.set_id(f.id);

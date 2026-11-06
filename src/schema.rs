@@ -92,9 +92,16 @@ pub enum ListVal {
     Void(u32),
     Bits(Vec<bool>),
     /// Element size in bytes (1, 2, 4 or 8) and little-endian values.
-    Bytes { size: u8, values: Vec<u64> },
+    Bytes {
+        size: u8,
+        values: Vec<u64>,
+    },
     Pointers(Vec<Ptr>),
-    Structs { data_words: u16, pointer_count: u16, elems: Vec<StructVal> },
+    Structs {
+        data_words: u16,
+        pointer_count: u16,
+        elems: Vec<StructVal>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -137,8 +144,15 @@ pub enum Ordinal {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum FieldKind {
-    Slot { offset: u32, ty: Type, default_value: Value, had_explicit_default: bool },
-    Group { type_id: Id },
+    Slot {
+        offset: u32,
+        ty: Type,
+        default_value: Value,
+        had_explicit_default: bool,
+    },
+    Group {
+        type_id: Id,
+    },
 }
 
 pub const NO_DISCRIMINANT: u16 = 0xffff;

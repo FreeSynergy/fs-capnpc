@@ -15,11 +15,23 @@ use std::rc::Rc;
 /// Embedded standard schema files (`/capnp/*.capnp`).
 pub const STD_FILES: &[(&str, &str)] = &[
     ("capnp/c++.capnp", include_str!("../std/capnp/c++.capnp")),
-    ("capnp/schema.capnp", include_str!("../std/capnp/schema.capnp")),
-    ("capnp/stream.capnp", include_str!("../std/capnp/stream.capnp")),
-    ("capnp/persistent.capnp", include_str!("../std/capnp/persistent.capnp")),
+    (
+        "capnp/schema.capnp",
+        include_str!("../std/capnp/schema.capnp"),
+    ),
+    (
+        "capnp/stream.capnp",
+        include_str!("../std/capnp/stream.capnp"),
+    ),
+    (
+        "capnp/persistent.capnp",
+        include_str!("../std/capnp/persistent.capnp"),
+    ),
     ("capnp/rpc.capnp", include_str!("../std/capnp/rpc.capnp")),
-    ("capnp/rpc-twoparty.capnp", include_str!("../std/capnp/rpc-twoparty.capnp")),
+    (
+        "capnp/rpc-twoparty.capnp",
+        include_str!("../std/capnp/rpc-twoparty.capnp"),
+    ),
     ("capnp/rust.capnp", include_str!("../std/capnp/rust.capnp")),
 ];
 
@@ -73,7 +85,11 @@ pub fn eval_components(base: &[String], rel: &str) -> Option<Vec<String>> {
 
 fn abs_components(p: &Path) -> Vec<String> {
     let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("/"));
-    let joined = if p.is_absolute() { p.to_path_buf() } else { cwd.join(p) };
+    let joined = if p.is_absolute() {
+        p.to_path_buf()
+    } else {
+        cwd.join(p)
+    };
     let mut out: Vec<String> = vec![];
     for c in joined.components() {
         use std::path::Component::*;
@@ -104,7 +120,11 @@ impl SourceLoader {
     /// Work out the directory and relative path for a file named on the command line.
     pub fn interpret_source_file(&self, file: &Path) -> (Dir, Vec<String>) {
         let path = abs_components(file);
-        let prefixes: Vec<Vec<String>> = self.src_prefixes.iter().map(|p| abs_components(p)).collect();
+        let prefixes: Vec<Vec<String>> = self
+            .src_prefixes
+            .iter()
+            .map(|p| abs_components(p))
+            .collect();
         for i in (1..path.len()).rev() {
             let prefix = &path[..i];
             if prefixes.iter().any(|p| p.as_slice() == prefix) {
@@ -126,11 +146,18 @@ impl SourceLoader {
                 for c in path {
                     p.push(c);
                 }
-                if p.is_file() { std::fs::read(&p).ok() } else { None }
+                if p.is_file() {
+                    std::fs::read(&p).ok()
+                } else {
+                    None
+                }
             }
             Dir::Std => {
                 let name = path.join("/");
-                STD_FILES.iter().find(|(n, _)| *n == name).map(|(_, c)| c.as_bytes().to_vec())
+                STD_FILES
+                    .iter()
+                    .find(|(n, _)| *n == name)
+                    .map(|(_, c)| c.as_bytes().to_vec())
             }
         }
     }
@@ -142,14 +169,22 @@ impl SourceLoader {
                 for c in path {
                     p.push(c);
                 }
-                std::fs::canonicalize(&p).unwrap_or(p).to_string_lossy().into_owned()
+                std::fs::canonicalize(&p)
+                    .unwrap_or(p)
+                    .to_string_lossy()
+                    .into_owned()
             }
             Dir::Std => format!("std:{}", path.join("/")),
         }
     }
 
     /// Load (or fetch from the cache) a module. Parse errors are appended to `errors`.
-    pub fn load_module(&mut self, dir: &Dir, path: &[String], errors: &mut Vec<Diagnostic>) -> Option<usize> {
+    pub fn load_module(
+        &mut self,
+        dir: &Dir,
+        path: &[String],
+        errors: &mut Vec<Diagnostic>,
+    ) -> Option<usize> {
         if path.is_empty() {
             return None;
         }
@@ -187,10 +222,19 @@ impl SourceLoader {
     }
 
     /// Import `import_path` from module `from`.
-    pub fn import_relative(&mut self, from: usize, import_path: &str, errors: &mut Vec<Diagnostic>) -> Option<usize> {
+    pub fn import_relative(
+        &mut self,
+        from: usize,
+        import_path: &str,
+        errors: &mut Vec<Diagnostic>,
+    ) -> Option<usize> {
         if let Some(abs) = import_path.strip_prefix('/') {
             let comps = eval_components(&[], abs)?;
-            let mut dirs: Vec<Dir> = self.import_paths.iter().map(|p| Dir::Disk(p.clone())).collect();
+            let mut dirs: Vec<Dir> = self
+                .import_paths
+                .iter()
+                .map(|p| Dir::Disk(p.clone()))
+                .collect();
             if !self.no_standard_import {
                 dirs.push(Dir::Std);
             }
@@ -238,16 +282,24 @@ mod tests {
     #[test]
     fn eval() {
         let base = vec!["a".to_string(), "b".to_string()];
-        assert_eq!(eval_components(&base, "../c.capnp"), Some(vec!["a".into(), "c.capnp".into()]));
+        assert_eq!(
+            eval_components(&base, "../c.capnp"),
+            Some(vec!["a".into(), "c.capnp".into()])
+        );
         assert_eq!(eval_components(&base, "../../../x"), None);
-        assert_eq!(eval_components(&[], "capnp/c++.capnp"), Some(vec!["capnp".into(), "c++.capnp".into()]));
+        assert_eq!(
+            eval_components(&[], "capnp/c++.capnp"),
+            Some(vec!["capnp".into(), "c++.capnp".into()])
+        );
     }
 
     #[test]
     fn std_import() {
         let mut l = SourceLoader::new();
         let mut errs = vec![];
-        let m = l.load_module(&Dir::Std, &["capnp".into(), "c++.capnp".into()], &mut errs).unwrap();
+        let m = l
+            .load_module(&Dir::Std, &["capnp".into(), "c++.capnp".into()], &mut errs)
+            .unwrap();
         assert!(errs.is_empty(), "{errs:?}");
         let r = l.import_relative(m, "/capnp/stream.capnp", &mut errs);
         assert!(r.is_some());

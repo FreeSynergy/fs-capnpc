@@ -252,7 +252,10 @@ impl LoaderSim {
 
     /// All really loaded nodes, in insertion order.
     pub fn all_loaded(&self) -> Vec<Rc<Node>> {
-        self.order.iter().filter_map(|id| self.loaded.get(id).cloned()).collect()
+        self.order
+            .iter()
+            .filter_map(|id| self.loaded.get(id).cloned())
+            .collect()
     }
 }
 
@@ -333,8 +336,17 @@ impl Compiler {
     // ------------------------------------------------------------------ errors
 
     pub fn add_error(&mut self, module: usize, span: Span, message: impl Into<String>) {
-        let file = self.loader.modules.get(module).map(|m| m.display_name.clone()).unwrap_or_default();
-        self.diagnostics.push(Diagnostic { file, span, message: message.into() });
+        let file = self
+            .loader
+            .modules
+            .get(module)
+            .map(|m| m.display_name.clone())
+            .unwrap_or_default();
+        self.diagnostics.push(Diagnostic {
+            file,
+            span,
+            message: message.into(),
+        });
     }
 
     pub fn had_errors(&self) -> bool {
@@ -343,7 +355,11 @@ impl Compiler {
 
     pub fn report_resolution(&mut self, module: usize, start: u32, end: u32, type_id: Id) {
         if let Some(m) = self.loader.modules.get_mut(module) {
-            m.resolutions.push(crate::source::Resolution { start_byte: start, end_byte: end, type_id });
+            m.resolutions.push(crate::source::Resolution {
+                start_byte: start,
+                end_byte: end,
+                type_id,
+            });
         }
     }
 
@@ -387,10 +403,23 @@ impl Compiler {
     fn new_child(&mut self, parent: NodeIdx, decl: Rc<Declaration>) -> NodeIdx {
         let module = self.nodes[parent].module;
         let pid = self.nodes[parent].id;
-        let id = decl.uid().unwrap_or_else(|| generate_child_id(pid, &decl.name.value));
-        let sep = if self.nodes[parent].parent.is_none() { ':' } else { '.' };
-        let display = format!("{}{}{}", self.nodes[parent].display_name, sep, decl.name.value);
-        let span = if !decl.name.value.is_empty() { decl.name.span } else { decl.span };
+        let id = decl
+            .uid()
+            .unwrap_or_else(|| generate_child_id(pid, &decl.name.value));
+        let sep = if self.nodes[parent].parent.is_none() {
+            ':'
+        } else {
+            '.'
+        };
+        let display = format!(
+            "{}{}{}",
+            self.nodes[parent].display_name, sep, decl.name.value
+        );
+        let span = if !decl.name.value.is_empty() {
+            decl.name.span
+        } else {
+            decl.span
+        };
         let idx = self.nodes.len();
         self.nodes.push(NodeData {
             module,
@@ -426,10 +455,22 @@ impl Compiler {
             }
             if desired & (1u64 << 63) != 0 {
                 let other = self.nodes_by_id[&desired];
-                let (m, s, e) = (self.nodes[idx].module, self.nodes[idx].start_byte, self.nodes[idx].end_byte);
+                let (m, s, e) = (
+                    self.nodes[idx].module,
+                    self.nodes[idx].start_byte,
+                    self.nodes[idx].end_byte,
+                );
                 self.add_error(m, Span::new(s, e), format!("Duplicate ID @0x{desired:x}."));
-                let (m2, s2, e2) = (self.nodes[other].module, self.nodes[other].start_byte, self.nodes[other].end_byte);
-                self.add_error(m2, Span::new(s2, e2), format!("ID @0x{desired:x} originally used here."));
+                let (m2, s2, e2) = (
+                    self.nodes[other].module,
+                    self.nodes[other].start_byte,
+                    self.nodes[other].end_byte,
+                );
+                self.add_error(
+                    m2,
+                    Span::new(s2, e2),
+                    format!("ID @0x{desired:x} originally used here."),
+                );
             }
             desired = self.next_bogus_id;
             self.next_bogus_id += 1;
@@ -441,17 +482,27 @@ impl Compiler {
     }
 
     pub fn decl(&self, idx: NodeIdx) -> Rc<Declaration> {
-        self.nodes[idx].decl.clone().expect("builtin has no declaration")
+        self.nodes[idx]
+            .decl
+            .clone()
+            .expect("builtin has no declaration")
     }
 
     pub fn node_error(&mut self, idx: NodeIdx, msg: impl Into<String>) {
-        let (m, s, e) = (self.nodes[idx].module, self.nodes[idx].start_byte, self.nodes[idx].end_byte);
+        let (m, s, e) = (
+            self.nodes[idx].module,
+            self.nodes[idx].start_byte,
+            self.nodes[idx].end_byte,
+        );
         self.add_error(m, Span::new(s, e), msg);
     }
 
     /// Advance the node to at least `min`. Returns false when a recursive dependency was detected.
     pub fn ensure_state(&mut self, idx: NodeIdx, min: State) -> bool {
-        assert!(!self.nodes[idx].is_builtin, "illegal method call for built-in declaration");
+        assert!(
+            !self.nodes[idx].is_builtin,
+            "illegal method call for built-in declaration"
+        );
         if self.nodes[idx].state >= min {
             return true;
         }
@@ -509,7 +560,9 @@ impl Compiler {
                 | DeclBody::Struct
                 | DeclBody::Interface { .. } => {
                     let child = self.new_child(idx, nested.clone());
-                    self.nodes[idx].nested.push((nested.name.value.clone(), child));
+                    self.nodes[idx]
+                        .nested
+                        .push((nested.name.value.clone(), child));
                 }
                 DeclBody::Using { target } => {
                     let a = self.aliases.len();
@@ -539,7 +592,10 @@ impl Compiler {
             }
             return self.bootstrap_by_id.get(&id).cloned();
         }
-        self.final_by_id.get(&id).or_else(|| self.bootstrap_by_id.get(&id)).cloned()
+        self.final_by_id
+            .get(&id)
+            .or_else(|| self.bootstrap_by_id.get(&id))
+            .cloned()
     }
 
     pub fn resolve_final_schema(&mut self, id: Id) -> Option<Rc<Node>> {
@@ -573,7 +629,10 @@ impl Compiler {
         if let Some(d) = &self.nodes[node].decl {
             for (i, p) in d.parameters.iter().enumerate() {
                 if p.name == name {
-                    return Some(ResolveResult::Param(ResolvedParameter { id: self.nodes[node].id, index: i }));
+                    return Some(ResolveResult::Param(ResolvedParameter {
+                        id: self.nodes[node].id,
+                        index: i,
+                    }));
                 }
             }
         }
@@ -644,8 +703,11 @@ impl Compiler {
     pub fn alias_compile(&mut self, a: usize) -> Option<ResolveResult> {
         if !self.aliases[a].initialized {
             self.aliases[a].initialized = true;
-            let (module, parent, expr) =
-                (self.aliases[a].module, self.aliases[a].parent, self.aliases[a].target_name.clone());
+            let (module, parent, expr) = (
+                self.aliases[a].module,
+                self.aliases[a].parent,
+                self.aliases[a].target_name.clone(),
+            );
             let pid = self.nodes[parent].id;
             let pcount = self.nodes[parent].generic_param_count;
             let r = self.compile_decl(pid, pcount, parent, module, &expr);
@@ -664,8 +726,13 @@ impl Compiler {
         expr: &Expression,
     ) -> Option<ResolveResult> {
         let scope = BrandScope::new_root(self, module, scope_id, scope_param_count, resolver);
-        let decl = scope.compile_decl_expression(self, expr, resolver, &crate::generics::ImplicitParams::none())?;
-        Some(decl.as_resolve_result(self, scope.leaf_id(), ))
+        let decl = scope.compile_decl_expression(
+            self,
+            expr,
+            resolver,
+            &crate::generics::ImplicitParams::none(),
+        )?;
+        Some(decl.as_resolve_result(self, scope.leaf_id()))
     }
 
     // ------------------------------------------------------------------ traversal
@@ -694,7 +761,13 @@ impl Compiler {
         }
     }
 
-    fn traverse(&mut self, idx: NodeIdx, eagerness: u32, seen: &mut HashMap<NodeIdx, u32>, si: &mut Vec<SourceInfo>) {
+    fn traverse(
+        &mut self,
+        idx: NodeIdx,
+        eagerness: u32,
+        seen: &mut HashMap<NodeIdx, u32>,
+        si: &mut Vec<SourceInfo>,
+    ) {
         let slot = seen.entry(idx).or_insert(0);
         if *slot & eagerness == eagerness {
             return;
@@ -777,7 +850,13 @@ impl Compiler {
         self.traverse_annotations(&node.annotations, e, seen, si);
     }
 
-    fn traverse_type(&mut self, ty: &schema::Type, e: u32, seen: &mut HashMap<NodeIdx, u32>, si: &mut Vec<SourceInfo>) {
+    fn traverse_type(
+        &mut self,
+        ty: &schema::Type,
+        e: u32,
+        seen: &mut HashMap<NodeIdx, u32>,
+        si: &mut Vec<SourceInfo>,
+    ) {
         use schema::Type::*;
         match ty {
             Struct { type_id, brand } | Enum { type_id, brand } | Interface { type_id, brand } => {
@@ -789,7 +868,13 @@ impl Compiler {
         }
     }
 
-    fn traverse_brand(&mut self, brand: &Brand, e: u32, seen: &mut HashMap<NodeIdx, u32>, si: &mut Vec<SourceInfo>) {
+    fn traverse_brand(
+        &mut self,
+        brand: &Brand,
+        e: u32,
+        seen: &mut HashMap<NodeIdx, u32>,
+        si: &mut Vec<SourceInfo>,
+    ) {
         for s in &brand.scopes {
             if let schema::BrandScopeKind::Bind(bs) = &s.kind {
                 for b in bs {
@@ -885,7 +970,9 @@ fn find_imports_decl(d: &Declaration, out: &mut BTreeSet<String>) {
         DeclBody::Using { target } => find_imports_expr(target, out),
         DeclBody::Const { ty, .. } => find_imports_expr(ty, out),
         DeclBody::Field { ty, .. } => find_imports_expr(ty, out),
-        DeclBody::Interface { superclasses } => superclasses.iter().for_each(|s| find_imports_expr(s, out)),
+        DeclBody::Interface { superclasses } => {
+            superclasses.iter().for_each(|s| find_imports_expr(s, out))
+        }
         DeclBody::Method { params, results } => {
             find_imports_params(params, out);
             if let Some(r) = results {
@@ -950,7 +1037,12 @@ pub fn compile_files(opts: &CompileOptions) -> Result<CompileOutput, Error> {
         c.eagerly_compile(root, DEFAULT_EAGERNESS);
         let id = c.nodes[root].id;
         let filename = c.loader.modules[m].display_name.clone();
-        c.requested.push(RequestedFile { id, filename, imports: vec![], module: m });
+        c.requested.push(RequestedFile {
+            id,
+            filename,
+            imports: vec![],
+            module: m,
+        });
     }
 
     if c.had_errors() {
@@ -959,17 +1051,31 @@ pub fn compile_files(opts: &CompileOptions) -> Result<CompileOutput, Error> {
 
     let nodes = c.sim.all_loaded();
     let mut files = vec![];
-    let reqs: Vec<(Id, String, usize)> = c.requested.iter().map(|r| (r.id, r.filename.clone(), r.module)).collect();
+    let reqs: Vec<(Id, String, usize)> = c
+        .requested
+        .iter()
+        .map(|r| (r.id, r.filename.clone(), r.module))
+        .collect();
     for (id, filename, module) in reqs {
         let imports = c.file_import_table(module);
         let resolutions = c.loader.modules[module].resolutions.clone();
-        files.push(RequestedFileOut { id, filename, imports, resolutions });
+        files.push(RequestedFileOut {
+            id,
+            filename,
+            imports,
+            resolutions,
+        });
     }
     if c.had_errors() {
         return Err(render_errors(&c));
     }
-    let source_info = crate::hashorder::order_source_info(std::mem::take(&mut c.source_info_inserted));
-    Ok(CompileOutput { nodes, source_info, requested_files: files })
+    let source_info =
+        crate::hashorder::order_source_info(std::mem::take(&mut c.source_info_inserted));
+    Ok(CompileOutput {
+        nodes,
+        source_info,
+        requested_files: files,
+    })
 }
 
 fn render_errors(c: &Compiler) -> Error {
@@ -980,10 +1086,18 @@ fn render_errors(c: &Compiler) -> Error {
         if !seen.insert(key) {
             continue;
         }
-        let src = c.loader.modules.iter().find(|m| m.display_name == d.file).map(|m| m.source.as_slice());
+        let src = c
+            .loader
+            .modules
+            .iter()
+            .find(|m| m.display_name == d.file)
+            .map(|m| m.source.as_slice());
         rendered.push(d.render(src));
     }
-    Error { diagnostics: c.diagnostics.clone(), rendered }
+    Error {
+        diagnostics: c.diagnostics.clone(),
+        rendered,
+    }
 }
 
 #[allow(dead_code)]

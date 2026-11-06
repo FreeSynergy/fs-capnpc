@@ -15,7 +15,10 @@ impl Span {
     }
     /// Smallest span covering both.
     pub fn to(self, other: Span) -> Span {
-        Span { start: self.start.min(other.start), end: self.end.max(other.end) }
+        Span {
+            start: self.start.min(other.start),
+            end: self.end.max(other.end),
+        }
     }
 }
 
@@ -42,7 +45,11 @@ impl Diagnostic {
 
 impl fmt::Display for Diagnostic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}-{}: error: {}", self.file, self.span.start, self.span.end, self.message)
+        write!(
+            f,
+            "{}:{}-{}: error: {}",
+            self.file, self.span.start, self.span.end, self.message
+        )
     }
 }
 
@@ -72,7 +79,10 @@ pub struct Error {
 impl Error {
     pub fn single(message: impl Into<String>) -> Self {
         let m = message.into();
-        Error { diagnostics: vec![], rendered: vec![m] }
+        Error {
+            diagnostics: vec![],
+            rendered: vec![m],
+        }
     }
 }
 

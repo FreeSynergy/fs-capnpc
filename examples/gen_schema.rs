@@ -21,6 +21,13 @@ fn main() {
     std::fs::copy("std/capnp/c++.capnp", dir.join("c++.capnp")).unwrap();
     let file = dir.join("schema.capnp");
     std::fs::write(&file, patched).unwrap();
-    let req = capnpc_embedded::CompileCommand::new().src_prefix(&dir).file(&file).compile().unwrap();
-    capnpc::codegen::CodeGenerationCommand::new().output_directory(&out).run(&req[..]).unwrap();
+    let req = capnpc_embedded::CompileCommand::new()
+        .src_prefix(&dir)
+        .file(&file)
+        .compile()
+        .unwrap();
+    capnpc::codegen::CodeGenerationCommand::new()
+        .output_directory(&out)
+        .run(&req[..])
+        .unwrap();
 }

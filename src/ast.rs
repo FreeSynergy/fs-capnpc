@@ -36,8 +36,14 @@ pub enum ExprKind {
     Embed(String),
     List(Vec<Expression>),
     Tuple(Vec<ExprParam>),
-    Application { function: Box<Expression>, params: Vec<ExprParam> },
-    Member { parent: Box<Expression>, name: Located<String> },
+    Application {
+        function: Box<Expression>,
+        params: Vec<ExprParam>,
+    },
+    Member {
+        parent: Box<Expression>,
+        name: Located<String>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -108,8 +114,17 @@ pub struct Targets {
 impl Targets {
     pub fn all() -> Self {
         Targets {
-            file: true, constant: true, enumeration: true, enumerant: true, structure: true,
-            field: true, union: true, group: true, interface: true, method: true, param: true,
+            file: true,
+            constant: true,
+            enumeration: true,
+            enumerant: true,
+            structure: true,
+            field: true,
+            union: true,
+            group: true,
+            interface: true,
+            method: true,
+            param: true,
             annotation: true,
         }
     }
@@ -118,17 +133,33 @@ impl Targets {
 #[derive(Clone, Debug, PartialEq)]
 pub enum DeclBody {
     File,
-    Using { target: Expression },
-    Const { ty: Expression, value: Expression },
+    Using {
+        target: Expression,
+    },
+    Const {
+        ty: Expression,
+        value: Expression,
+    },
     Enum,
     Enumerant,
     Struct,
-    Field { ty: Expression, default_value: Option<Expression> },
+    Field {
+        ty: Expression,
+        default_value: Option<Expression>,
+    },
     Union,
     Group,
-    Interface { superclasses: Vec<Expression> },
-    Method { params: ParamList, results: Option<ParamList> },
-    Annotation { ty: Expression, targets: Targets },
+    Interface {
+        superclasses: Vec<Expression>,
+    },
+    Method {
+        params: ParamList,
+        results: Option<ParamList>,
+    },
+    Annotation {
+        ty: Expression,
+        targets: Targets,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -16,7 +16,10 @@ pub struct ImplicitParams {
 
 impl ImplicitParams {
     pub fn none() -> Self {
-        ImplicitParams { scope_id: 0, params: vec![] }
+        ImplicitParams {
+            scope_id: 0,
+            params: vec![],
+        }
     }
 }
 
@@ -42,7 +45,11 @@ fn err_span(source: &Option<Rc<Expression>>) -> Span {
 
 impl BrandedDecl {
     pub fn implicit_method_param(index: usize) -> BrandedDecl {
-        BrandedDecl { body: ResolveResult::Param(ResolvedParameter { id: 0, index }), brand: None, source: None }
+        BrandedDecl {
+            body: ResolveResult::Param(ResolvedParameter { id: 0, index }),
+            brand: None,
+            source: None,
+        }
     }
 
     pub fn kind(&self) -> Option<DeclKind> {
@@ -73,7 +80,10 @@ impl BrandedDecl {
     pub fn to_string(&self) -> String {
         match &self.source {
             Some(s) => expression_string(s),
-            None => expression_string(&Expression { kind: ExprKind::Unknown, span: Span::default() }),
+            None => expression_string(&Expression {
+                kind: ExprKind::Unknown,
+                span: Span::default(),
+            }),
         }
     }
 
@@ -86,7 +96,11 @@ impl BrandedDecl {
         match &self.body {
             ResolveResult::Param(_) => None,
             ResolveResult::Decl(d) => {
-                let scope = self.brand.as_ref().unwrap().set_params(c, params, d.kind, sub_source)?;
+                let scope = self
+                    .brand
+                    .as_ref()
+                    .unwrap()
+                    .set_params(c, params, d.kind, sub_source)?;
                 Some(BrandedDecl {
                     body: self.body.clone(),
                     brand: Some(scope),
@@ -96,12 +110,22 @@ impl BrandedDecl {
         }
     }
 
-    pub fn get_member(&self, c: &mut Compiler, name: &str, sub_source: &Expression) -> Option<BrandedDecl> {
+    pub fn get_member(
+        &self,
+        c: &mut Compiler,
+        name: &str,
+        sub_source: &Expression,
+    ) -> Option<BrandedDecl> {
         match &self.body {
             ResolveResult::Param(_) => None,
             ResolveResult::Decl(d) => {
                 let r = c.resolve_member(d.resolver, name)?;
-                Some(self.brand.as_ref().unwrap().interpret_resolve(c, &r, sub_source))
+                Some(
+                    self.brand
+                        .as_ref()
+                        .unwrap()
+                        .interpret_resolve(c, &r, sub_source),
+                )
             }
         }
     }
@@ -113,7 +137,11 @@ impl BrandedDecl {
         };
         assert_eq!(d.kind, DeclKind::BuiltinList);
         let params = self.brand.as_ref().unwrap().get_params(d.id)?;
-        if params.len() != 1 { None } else { Some(params[0].clone()) }
+        if params.len() != 1 {
+            None
+        } else {
+            Some(params[0].clone())
+        }
     }
 
     pub fn id_and_brand(&self, c: &mut Compiler) -> (Id, Brand) {
@@ -174,14 +202,22 @@ impl BrandedDecl {
                 DeclKind::BuiltinData => Some(Type::Data),
                 DeclKind::BuiltinObject => {
                     self.add_error(c, module, "As of Cap'n Proto 0.4, 'Object' has been renamed to 'AnyPointer'.  Sorry for the inconvenience, and thanks for being an early adopter.  :)");
-                    Some(Type::AnyPointer(AnyPointer::Unconstrained(Unconstrained::AnyKind)))
+                    Some(Type::AnyPointer(AnyPointer::Unconstrained(
+                        Unconstrained::AnyKind,
+                    )))
                 }
-                DeclKind::BuiltinAnyPointer => Some(Type::AnyPointer(AnyPointer::Unconstrained(Unconstrained::AnyKind))),
-                DeclKind::BuiltinAnyStruct => Some(Type::AnyPointer(AnyPointer::Unconstrained(Unconstrained::Struct))),
-                DeclKind::BuiltinAnyList => Some(Type::AnyPointer(AnyPointer::Unconstrained(Unconstrained::List))),
-                DeclKind::BuiltinCapability => {
-                    Some(Type::AnyPointer(AnyPointer::Unconstrained(Unconstrained::Capability)))
-                }
+                DeclKind::BuiltinAnyPointer => Some(Type::AnyPointer(AnyPointer::Unconstrained(
+                    Unconstrained::AnyKind,
+                ))),
+                DeclKind::BuiltinAnyStruct => Some(Type::AnyPointer(AnyPointer::Unconstrained(
+                    Unconstrained::Struct,
+                ))),
+                DeclKind::BuiltinAnyList => Some(Type::AnyPointer(AnyPointer::Unconstrained(
+                    Unconstrained::List,
+                ))),
+                DeclKind::BuiltinCapability => Some(Type::AnyPointer(AnyPointer::Unconstrained(
+                    Unconstrained::Capability,
+                ))),
                 _ => {
                     let msg = format!("'{}' is not a type.", self.to_string());
                     self.add_error(c, module, msg);
@@ -189,9 +225,13 @@ impl BrandedDecl {
                 }
             },
             None => {
-                let ResolveResult::Param(var) = &self.body else { unreachable!() };
+                let ResolveResult::Param(var) = &self.body else {
+                    unreachable!()
+                };
                 if var.id == 0 {
-                    Some(Type::AnyPointer(AnyPointer::ImplicitMethodParameter { parameter_index: var.index as u16 }))
+                    Some(Type::AnyPointer(AnyPointer::ImplicitMethodParameter {
+                        parameter_index: var.index as u16,
+                    }))
                 } else {
                     Some(Type::AnyPointer(AnyPointer::Parameter {
                         scope_id: var.id,
@@ -216,11 +256,24 @@ impl BrandedDecl {
 }
 
 impl BrandScope {
-    pub fn new_root(c: &mut Compiler, module: usize, id: Id, param_count: usize, resolver: NodeIdx) -> Rc<BrandScope> {
+    pub fn new_root(
+        c: &mut Compiler,
+        module: usize,
+        id: Id,
+        param_count: usize,
+        resolver: NodeIdx,
+    ) -> Rc<BrandScope> {
         let parent = c
             .get_parent(resolver)
             .map(|p| BrandScope::new_root(c, module, p.id, p.generic_param_count, p.resolver));
-        Rc::new(BrandScope { module, parent, leaf_id: id, leaf_param_count: param_count, inherited: true, params: vec![] })
+        Rc::new(BrandScope {
+            module,
+            parent,
+            leaf_id: id,
+            leaf_param_count: param_count,
+            inherited: true,
+            params: vec![],
+        })
     }
 
     fn simple(module: usize, scope_id: Id) -> Rc<BrandScope> {
@@ -261,11 +314,19 @@ impl BrandScope {
         source: &Expression,
     ) -> Option<Rc<BrandScope>> {
         if !self.params.is_empty() {
-            c.add_error(self.module, source.span, "Double-application of generic parameters.");
+            c.add_error(
+                self.module,
+                source.span,
+                "Double-application of generic parameters.",
+            );
             None
         } else if params.len() > self.leaf_param_count {
             if self.leaf_param_count == 0 {
-                c.add_error(self.module, source.span, "Declaration does not accept generic parameters.");
+                c.add_error(
+                    self.module,
+                    source.span,
+                    "Declaration does not accept generic parameters.",
+                );
             } else {
                 c.add_error(self.module, source.span, "Too many generic parameters.");
             }
@@ -284,7 +345,11 @@ impl BrandScope {
                             | DeclKind::BuiltinAnyPointer
                             | DeclKind::Struct
                             | DeclKind::Interface => {}
-                            _ => p.add_error(c, self.module, "Sorry, only pointer types can be used as generic parameters."),
+                            _ => p.add_error(
+                                c,
+                                self.module,
+                                "Sorry, only pointer types can be used as generic parameters.",
+                            ),
                         }
                     }
                 }
@@ -310,7 +375,12 @@ impl BrandScope {
         }
     }
 
-    pub fn lookup_parameter(self: &Rc<Self>, c: &mut Compiler, scope_id: Id, index: usize) -> Option<BrandedDecl> {
+    pub fn lookup_parameter(
+        self: &Rc<Self>,
+        c: &mut Compiler,
+        scope_id: Id,
+        index: usize,
+    ) -> Option<BrandedDecl> {
         if scope_id == self.leaf_id {
             if index < self.params.len() {
                 Some(self.params[index].clone())
@@ -319,23 +389,38 @@ impl BrandScope {
             } else {
                 let decl = c.resolve_builtin(DeclKind::BuiltinAnyPointer);
                 let brand = self.evaluate_brand(c, &decl, &[], 0);
-                Some(BrandedDecl { body: ResolveResult::Decl(decl), brand: Some(brand), source: None })
+                Some(BrandedDecl {
+                    body: ResolveResult::Decl(decl),
+                    brand: Some(brand),
+                    source: None,
+                })
             }
         } else {
-            self.parent.as_ref().and_then(|p| p.lookup_parameter(c, scope_id, index))
+            self.parent
+                .as_ref()
+                .and_then(|p| p.lookup_parameter(c, scope_id, index))
         }
     }
 
     /// `None` means "inherited from the client scope".
     pub fn get_params(&self, scope_id: Id) -> Option<Vec<BrandedDecl>> {
         if scope_id == self.leaf_id {
-            if self.inherited { None } else { Some(self.params.clone()) }
+            if self.inherited {
+                None
+            } else {
+                Some(self.params.clone())
+            }
         } else {
             self.parent.as_ref().and_then(|p| p.get_params(scope_id))
         }
     }
 
-    pub fn interpret_resolve(self: &Rc<Self>, c: &mut Compiler, result: &ResolveResult, source: &Expression) -> BrandedDecl {
+    pub fn interpret_resolve(
+        self: &Rc<Self>,
+        c: &mut Compiler,
+        result: &ResolveResult,
+        source: &Expression,
+    ) -> BrandedDecl {
         match result {
             ResolveResult::Decl(decl) => {
                 let mut scope = self.pop(decl.scope_id);
@@ -344,11 +429,19 @@ impl BrandScope {
                 } else {
                     scope = scope.push(decl.id, decl.generic_param_count);
                 }
-                BrandedDecl { body: result.clone(), brand: Some(scope), source: Some(Rc::new(source.clone())) }
+                BrandedDecl {
+                    body: result.clone(),
+                    brand: Some(scope),
+                    source: Some(Rc::new(source.clone())),
+                }
             }
             ResolveResult::Param(p) => match self.lookup_parameter(c, p.id, p.index) {
                 Some(d) => d,
-                None => BrandedDecl { body: result.clone(), brand: None, source: Some(Rc::new(source.clone())) },
+                None => BrandedDecl {
+                    body: result.clone(),
+                    brand: None,
+                    source: Some(Rc::new(source.clone())),
+                },
             },
         }
     }
@@ -391,7 +484,9 @@ impl BrandScope {
                 index += 1;
             }
         }
-        let parent = c.get_parent(decl.resolver).map(|p| self.evaluate_brand(c, &p, brand, index));
+        let parent = c
+            .get_parent(decl.resolver)
+            .map(|p| self.evaluate_brand(c, &p, brand, index));
         Rc::new(BrandScope {
             module: self.module,
             parent,
@@ -405,7 +500,11 @@ impl BrandScope {
     fn builtin(self: &Rc<Self>, c: &mut Compiler, kind: DeclKind) -> BrandedDecl {
         let decl = c.resolve_builtin(kind);
         let brand = self.evaluate_brand(c, &decl, &[], 0);
-        BrandedDecl { body: ResolveResult::Decl(decl), brand: Some(brand), source: None }
+        BrandedDecl {
+            body: ResolveResult::Decl(decl),
+            brand: Some(brand),
+            source: None,
+        }
     }
 
     pub fn decompile_type(self: &Rc<Self>, c: &mut Compiler, ty: &Type) -> BrandedDecl {
@@ -424,32 +523,46 @@ impl BrandScope {
             Type::Float64 => self.builtin(c, DeclKind::BuiltinFloat64),
             Type::Text => self.builtin(c, DeclKind::BuiltinText),
             Type::Data => self.builtin(c, DeclKind::BuiltinData),
-            Type::Enum { type_id, brand } | Type::Struct { type_id, brand } | Type::Interface { type_id, brand } => {
+            Type::Enum { type_id, brand }
+            | Type::Struct { type_id, brand }
+            | Type::Interface { type_id, brand } => {
                 let decl = c.resolve_id(*type_id);
                 let b = self.evaluate_brand(c, &decl, &brand.scopes, 0);
-                BrandedDecl { body: ResolveResult::Decl(decl), brand: Some(b), source: None }
+                BrandedDecl {
+                    body: ResolveResult::Decl(decl),
+                    brand: Some(b),
+                    source: None,
+                }
             }
             Type::List(el) => {
                 let elem = self.decompile_type(c, el);
                 let list = self.builtin(c, DeclKind::BuiltinList);
-                list.apply_params(c, vec![elem], &Expression { kind: ExprKind::Unknown, span: Span::default() })
-                    .expect("List applies")
+                list.apply_params(
+                    c,
+                    vec![elem],
+                    &Expression {
+                        kind: ExprKind::Unknown,
+                        span: Span::default(),
+                    },
+                )
+                .expect("List applies")
             }
             Type::AnyPointer(ap) => match ap {
                 AnyPointer::Unconstrained(_) => self.builtin(c, DeclKind::BuiltinAnyPointer),
-                AnyPointer::Parameter { scope_id, parameter_index } => {
-                    match self.lookup_parameter(c, *scope_id, *parameter_index as usize) {
-                        Some(b) => b,
-                        None => BrandedDecl {
-                            body: ResolveResult::Param(ResolvedParameter {
-                                id: *scope_id,
-                                index: *parameter_index as usize,
-                            }),
-                            brand: None,
-                            source: None,
-                        },
-                    }
-                }
+                AnyPointer::Parameter {
+                    scope_id,
+                    parameter_index,
+                } => match self.lookup_parameter(c, *scope_id, *parameter_index as usize) {
+                    Some(b) => b,
+                    None => BrandedDecl {
+                        body: ResolveResult::Param(ResolvedParameter {
+                            id: *scope_id,
+                            index: *parameter_index as usize,
+                        }),
+                        brand: None,
+                        source: None,
+                    },
+                },
                 AnyPointer::ImplicitMethodParameter { .. } => {
                     panic!("Alias pointed to implicit method type parameter?")
                 }
@@ -482,7 +595,10 @@ impl BrandScope {
                 }
                 BrandScopeKind::Bind(b)
             };
-            scopes.push(schema::BrandScope { scope_id: lvl.leaf_id, kind });
+            scopes.push(schema::BrandScope {
+                scope_id: lvl.leaf_id,
+                kind,
+            });
         }
         Brand { scopes }
     }
@@ -514,7 +630,10 @@ impl BrandScope {
                             BrandedDecl::implicit_method_param(i)
                         } else {
                             BrandedDecl {
-                                body: ResolveResult::Param(ResolvedParameter { id: implicit.scope_id, index: i }),
+                                body: ResolveResult::Param(ResolvedParameter {
+                                    id: implicit.scope_id,
+                                    index: i,
+                                }),
                                 brand: None,
                                 source: None,
                             }
@@ -525,7 +644,12 @@ impl BrandScope {
                     Some(r) => {
                         let result = self.interpret_resolve(c, &r, source);
                         if let ResolveResult::Decl(d) = &r {
-                            c.report_resolution(self.module, source.span.start, source.span.end, d.id);
+                            c.report_resolution(
+                                self.module,
+                                source.span.start,
+                                source.span.end,
+                                d.id,
+                            );
                         }
                         Some(result)
                     }
@@ -541,7 +665,12 @@ impl BrandScope {
                     Some(r) => {
                         let result = self.interpret_resolve(c, &r, source);
                         if let ResolveResult::Decl(d) = &r {
-                            c.report_resolution(self.module, source.span.start, source.span.end, d.id);
+                            c.report_resolution(
+                                self.module,
+                                source.span.start,
+                                source.span.end,
+                                d.id,
+                            );
                         }
                         Some(result)
                     }
@@ -554,7 +683,13 @@ impl BrandScope {
             ExprKind::Import(filename) => match c.resolve_import(resolver, filename) {
                 Some(decl) => {
                     c.report_resolution(self.module, source.span.start, source.span.end, decl.id);
-                    let scope = BrandScope::new_root(c, self.module, decl.id, decl.generic_param_count, decl.resolver);
+                    let scope = BrandScope::new_root(
+                        c,
+                        self.module,
+                        decl.id,
+                        decl.generic_param_count,
+                        decl.resolver,
+                    );
                     Some(BrandedDecl {
                         body: ResolveResult::Decl(decl),
                         brand: Some(scope),
@@ -562,7 +697,11 @@ impl BrandScope {
                     })
                 }
                 None => {
-                    c.add_error(self.module, source.span, format!("Import failed: {filename}"));
+                    c.add_error(
+                        self.module,
+                        source.span,
+                        format!("Import failed: {filename}"),
+                    );
                     None
                 }
             },
@@ -592,7 +731,12 @@ impl BrandScope {
                 match decl.get_member(c, &name.value, source) {
                     Some(m) => {
                         if let Some(id) = m.generic_type_id() {
-                            c.report_resolution(self.module, source.span.start, source.span.end, id);
+                            c.report_resolution(
+                                self.module,
+                                source.span.start,
+                                source.span.end,
+                                id,
+                            );
                         }
                         Some(m)
                     }
@@ -600,7 +744,11 @@ impl BrandScope {
                         c.add_error(
                             self.module,
                             name.span,
-                            format!("'{}' has no member named '{}'", expression_string(parent), name.value),
+                            format!(
+                                "'{}' has no member named '{}'",
+                                expression_string(parent),
+                                name.value
+                            ),
                         );
                         None
                     }

@@ -43,11 +43,20 @@ struct Table {
 
 impl Table {
     fn new() -> Self {
-        Table { keys: vec![], next: vec![], head: None, buckets: vec![] }
+        Table {
+            keys: vec![],
+            next: vec![],
+            head: None,
+            buckets: vec![],
+        }
     }
 
     fn constrain(h: u64, bc: usize) -> usize {
-        if bc & (bc - 1) == 0 { (h as usize) & (bc - 1) } else { (h % bc as u64) as usize }
+        if bc & (bc - 1) == 0 {
+            (h as usize) & (bc - 1)
+        } else {
+            (h % bc as u64) as usize
+        }
     }
 
     fn next_of(&self, b: Before) -> Option<usize> {
@@ -149,7 +158,10 @@ pub fn order_source_info(items: Vec<SourceInfo>) -> Vec<SourceInfo> {
     }
     let order = t.iterate();
     let mut slots: Vec<Option<SourceInfo>> = items.into_iter().map(Some).collect();
-    order.into_iter().map(|i| slots[i].take().unwrap()).collect()
+    order
+        .into_iter()
+        .map(|i| slots[i].take().unwrap())
+        .collect()
 }
 
 #[cfg(test)]
@@ -157,7 +169,13 @@ mod tests {
     use super::*;
 
     fn order(keys: &[u64]) -> Vec<u64> {
-        let items = keys.iter().map(|&id| SourceInfo { id, ..Default::default() }).collect();
+        let items = keys
+            .iter()
+            .map(|&id| SourceInfo {
+                id,
+                ..Default::default()
+            })
+            .collect();
         order_source_info(items).into_iter().map(|s| s.id).collect()
     }
 
