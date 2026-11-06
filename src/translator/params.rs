@@ -83,7 +83,6 @@ pub(crate) fn compile_param_list(
             ordinal,
             is_results,
             &[],
-            Span::default(),
             implicit,
         ),
         Some(ParamListKind::Named(ps)) => compile_named_param_list(
@@ -93,7 +92,6 @@ pub(crate) fn compile_param_list(
             ordinal,
             is_results,
             ps,
-            param_list.unwrap().span,
             implicit,
         ),
         Some(ParamListKind::Type(t)) => {
@@ -140,7 +138,6 @@ pub(crate) fn compile_named_param_list(
     ordinal: u16,
     is_results: bool,
     params: &[Param],
-    span: Span,
     implicit: &[String],
 ) -> (Id, Brand) {
     let type_name = format!(
@@ -159,16 +156,13 @@ pub(crate) fn compile_named_param_list(
         annotations: vec![],
         parameters: vec![],
         is_generic: ts.wip.is_generic || !implicit.is_empty(),
-        start_byte: span.start,
-        end_byte: span.end,
+        // The reference compiler (1.4.0) leaves locations and the source-info id of the
+        // implicit parameter structs unset.
+        start_byte: 0,
+        end_byte: 0,
         kind: NodeKind::Struct(StructNode::default()),
     };
-    let info = SourceInfo {
-        id,
-        start_byte: span.start,
-        end_byte: span.end,
-        ..Default::default()
-    };
+    let info = SourceInfo::default();
     let (mut node, info) = translate_params(
         c,
         ts,

@@ -4,8 +4,8 @@
 //!
 //! The official compiler keeps source info in a `std::unordered_map<uint64_t, ...>` (libc++ when
 //! built for WASI) and emits it in iteration order. To produce an identical request we replay the
-//! insertions into a model of libc++'s `__hash_table` (singly linked list + bucket array, identity
-//! hash, max load factor 1.0, bucket counts growing through 2, 5, 11, 23, ... primes).
+//! insertions into a model of libc++'s `__hash_table` (singly linked list + bucket array, murmur2
+//! hash of the 8 key bytes on a 32-bit target, max load factor 1.0, bucket counts growing through 2, 5, 11, 23, ... primes).
 
 use crate::schema::SourceInfo;
 
@@ -28,6 +28,21 @@ fn next_prime(mut n: usize) -> usize {
         n += 1;
     }
     n
+}
+
+/// `std::hash<uint64_t>` of libc++ on a 32-bit target (wasm32): murmur2 over the 8 key bytes.
+fn hash_key(key: u64) -> u32 {
+    const M: u32 = 0x5bd1_e995;
+    let mut h: u32 = 8;
+    for word in [key as u32, (key >> 32) as u32] {
+        let mut k = word.wrapping_mul(M);
+        k ^= k >> 24;
+        k = k.wrapping_mul(M);
+        h = h.wrapping_mul(M) ^ k;
+    }
+    h ^= h >> 13;
+    h = h.wrapping_mul(M);
+    h ^ (h >> 15)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -53,7 +68,8 @@ impl Table {
         }
     }
 
-    fn constrain(h: u64, bc: usize) -> usize {
+    fn constrain(key: u64, bc: usize) -> usize {
+        let h = u64::from(hash_key(key));
         if bc.is_power_of_two() {
             (h as usize) & (bc - 1)
         } else {

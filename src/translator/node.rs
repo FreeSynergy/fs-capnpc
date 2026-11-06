@@ -102,8 +102,12 @@ pub(crate) fn compile_node(c: &mut Compiler, ts: &mut Translator, decl: &Declara
         }
         _ => panic!("This Declaration is not a node."),
     };
-    ts.wip.start_byte = decl.span.start;
-    ts.wip.end_byte = decl.span.end;
+    // The reference compiler leaves the node location of annotation declarations unset (the
+    // source info still carries it).
+    if !matches!(decl.body, DeclBody::Annotation { .. }) {
+        ts.wip.start_byte = decl.span.start;
+        ts.wip.end_byte = decl.span.end;
+    }
     ts.wip.annotations = compile_annotation_applications(c, ts, &decl.annotations, target);
 
     ts.source_info.id = ts.wip.id;
