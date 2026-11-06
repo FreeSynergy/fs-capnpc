@@ -102,9 +102,11 @@ pub(crate) fn compile_node(c: &mut Compiler, ts: &mut Translator, decl: &Declara
         }
         _ => panic!("This Declaration is not a node."),
     };
-    // The reference compiler leaves the node location of annotation declarations unset (the
-    // source info still carries it).
-    if !matches!(decl.body, DeclBody::Annotation { .. }) {
+    // The reference compiler leaves the node location of annotation declarations and of
+    // `StreamResult` unset (the source info still carries it).
+    if !matches!(decl.body, DeclBody::Annotation { .. })
+        && ts.wip.id != crate::translator::interfaces::STREAM_RESULT_ID
+    {
         ts.wip.start_byte = decl.span.start;
         ts.wip.end_byte = decl.span.end;
     }

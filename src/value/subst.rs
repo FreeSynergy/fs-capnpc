@@ -5,7 +5,7 @@
 use crate::schema::*;
 
 /// Replace type parameters in `ty` by the bindings in `brand`.
-pub(super) fn subst(ty: &Type, brand: &Brand) -> Type {
+pub(crate) fn subst(ty: &Type, brand: &Brand) -> Type {
     match ty {
         Type::AnyPointer(AnyPointer::Parameter {
             scope_id,
@@ -58,7 +58,14 @@ pub(super) fn subst_brand(b: &Brand, outer: &Brand) -> Brand {
                             })
                             .collect(),
                     ),
-                    BrandScopeKind::Inherit => BrandScopeKind::Inherit,
+                    // An inherited scope takes the outer binding of the same scope, if any.
+                    BrandScopeKind::Inherit => outer
+                        .scopes
+                        .iter()
+                        .find(|o| {
+                            o.scope_id == s.scope_id && matches!(o.kind, BrandScopeKind::Bind(_))
+                        })
+                        .map_or(BrandScopeKind::Inherit, |o| o.kind.clone()),
                 },
             })
             .collect(),

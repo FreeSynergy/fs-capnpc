@@ -8,10 +8,12 @@
 mod constants;
 mod convert;
 mod dynval;
+mod embed;
 mod expr;
 mod lists;
 mod structs;
 mod subst;
 mod vt;
 
+pub(crate) use subst::subst;
 pub use vt::compile_value;

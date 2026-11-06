@@ -139,13 +139,16 @@ impl Vt<'_> {
                 match ty {
                     Type::Text => Some(DynVal::Text(data)),
                     Type::Data => Some(DynVal::Data(data)),
-                    Type::Struct { .. } => {
-                        self.err(
-                            src.span,
-                            "Embedding a struct message is not supported by this compiler.",
-                        );
-                        None
-                    }
+                    Type::Struct { type_id, .. } => match super::embed::decode_root_struct(&data) {
+                        Some(sv) => Some(DynVal::Struct(*type_id, sv)),
+                        None => {
+                            self.err(
+                                src.span,
+                                "Embedded file is not a valid Cap'n Proto message.",
+                            );
+                            None
+                        }
+                    },
                     _ => {
                         self.err(
                             src.span,

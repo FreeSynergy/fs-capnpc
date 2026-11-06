@@ -76,24 +76,10 @@ pub(crate) fn compile_param_list(
 ) -> (Id, Brand) {
     let kind = param_list.map(|p| &p.kind);
     match kind {
-        None => compile_named_param_list(
-            c,
-            ts,
-            method_name,
-            ordinal,
-            is_results,
-            &[],
-            implicit,
-        ),
-        Some(ParamListKind::Named(ps)) => compile_named_param_list(
-            c,
-            ts,
-            method_name,
-            ordinal,
-            is_results,
-            ps,
-            implicit,
-        ),
+        None => compile_named_param_list(c, ts, method_name, ordinal, is_results, &[], implicit),
+        Some(ParamListKind::Named(ps)) => {
+            compile_named_param_list(c, ts, method_name, ordinal, is_results, ps, implicit)
+        }
         Some(ParamListKind::Type(t)) => {
             let ip = ImplicitParams {
                 scope_id: 0,

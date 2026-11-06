@@ -57,7 +57,8 @@ pub fn compile_annotation_applications(
                                 }
                             }
                             Some(expr) => {
-                                ann.value = compile_bootstrap_value(c, ts, expr, ty);
+                                let bound = crate::value::subst(ty, &ann.brand);
+                                ann.value = compile_bootstrap_value(c, ts, expr, &bound);
                             }
                         }
                     }
