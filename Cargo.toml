@@ -1,8 +1,9 @@
 [package]
 name = "capnp-compiler"
-version = "0.1.1-rc.2"
+version = "0.1.1-rc.3"
 edition = "2024"
 rust-version = "1.88"
+authors = ["FreeSynergy contributors"]
 description = "A Cap'n Proto schema compiler in pure Rust: parses .capnp files and produces the CodeGeneratorRequest used by capnpc"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/FreeSynergy/fs-capnpc"
