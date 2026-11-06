@@ -2,6 +2,7 @@
 
 pub mod ast;
 pub mod error;
+pub mod ids;
 pub mod layout;
 pub mod lexer;
 pub mod parser;
