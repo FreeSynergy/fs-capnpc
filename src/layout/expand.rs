@@ -9,7 +9,7 @@ use super::holes::HoleSet;
 impl Layout {
     pub(super) fn smallest_hole_at_least(
         usage: &DataLocationUsage,
-        location: &DataLocation,
+        location: DataLocation,
         lg: u32,
     ) -> Option<u32> {
         if !usage.is_used {
@@ -35,7 +35,7 @@ impl Layout {
 
     pub(super) fn allocate_from_hole(
         usage: &mut DataLocationUsage,
-        location: &DataLocation,
+        location: DataLocation,
         lg: u32,
     ) -> u32 {
         let result;
@@ -112,16 +112,7 @@ impl Layout {
         let union = self.groups[g].parent;
         let mut usage = self.groups[g].usage[loc_idx];
         let result;
-        if !usage.is_used {
-            if self.location_try_expand_to(union, loc_idx, lg) {
-                usage.is_used = true;
-                usage.lg_size_used = lg;
-                let loc = self.unions[union].data_locations[loc_idx];
-                result = Some(loc.offset << (loc.lg_size - lg));
-            } else {
-                result = None;
-            }
-        } else {
+        if usage.is_used {
             let new_size = usage.lg_size_used.max(lg) + 1;
             if self.usage_try_expand_usage(union, loc_idx, &mut usage, new_size, true) {
                 let r = usage
@@ -133,6 +124,13 @@ impl Layout {
             } else {
                 result = None;
             }
+        } else if self.location_try_expand_to(union, loc_idx, lg) {
+            usage.is_used = true;
+            usage.lg_size_used = lg;
+            let loc = self.unions[union].data_locations[loc_idx];
+            result = Some(loc.offset << (loc.lg_size - lg));
+        } else {
+            result = None;
         }
         self.groups[g].usage[loc_idx] = usage;
         result
@@ -151,17 +149,17 @@ impl Layout {
             }
             let usage = self.groups[g].usage[i];
             let loc = self.unions[union].data_locations[i];
-            if let Some(hole) = Self::smallest_hole_at_least(&usage, &loc, lg) {
-                if hole < best_size {
-                    best_size = hole;
-                    best_loc = Some(i);
-                }
+            if let Some(hole) = Self::smallest_hole_at_least(&usage, loc, lg)
+                && hole < best_size
+            {
+                best_size = hole;
+                best_loc = Some(i);
             }
         }
         if let Some(b) = best_loc {
             let loc = self.unions[union].data_locations[b];
             let mut usage = self.groups[g].usage[b];
-            let r = Self::allocate_from_hole(&mut usage, &loc, lg);
+            let r = Self::allocate_from_hole(&mut usage, loc, lg);
             self.groups[g].usage[b] = usage;
             return r;
         }

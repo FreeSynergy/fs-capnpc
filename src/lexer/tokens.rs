@@ -7,7 +7,7 @@ use super::cursor::{Lexer, is_name_char, is_name_start, is_op_char};
 use super::types::{Tok, Token};
 use crate::error::{Diagnostic, Span};
 
-impl<'a> Lexer<'a> {
+impl Lexer<'_> {
     pub(super) fn token_sequence(&mut self) -> Vec<Token> {
         let mut out = vec![];
         self.skip_comments_and_ws();

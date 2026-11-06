@@ -15,7 +15,7 @@ impl Compiler {
             .get(module)
             .map(|m| m.display_name.clone())
             .unwrap_or_default();
-        self.diagnostics.push(Diagnostic {
+        self.reporter.report(Diagnostic {
             file,
             span,
             message: message.into(),
@@ -24,7 +24,7 @@ impl Compiler {
 
     /// True when any diagnostic has been recorded.
     pub fn had_errors(&self) -> bool {
-        !self.diagnostics.is_empty()
+        self.reporter.had_errors()
     }
 
     /// Record that the byte range of a type expression resolved to `type_id`.

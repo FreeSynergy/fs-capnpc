@@ -74,7 +74,7 @@ impl LoaderSim {
                 }
             }
             schema::NodeKind::Const { ty, .. } | schema::NodeKind::Annotation { ty, .. } => {
-                Self::type_ids(ty, &mut out)
+                Self::type_ids(ty, &mut out);
             }
             _ => {}
         }

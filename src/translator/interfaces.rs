@@ -29,13 +29,12 @@ pub(crate) fn compile_interface(
                     s.id = id;
                     s.brand = brand;
                 }
-                Some(_) => decl.add_error(c, ts.module, format!("'{}' is not an interface.", decl.to_string())),
+                Some(_) => decl.add_error(c, ts.module, format!("'{decl}' is not an interface.")),
                 None => decl.add_error(
                     c,
                     ts.module,
                     format!(
-                        "'{}' is an unbound generic parameter. Currently we don't support extending these.",
-                        decl.to_string()
+                        "'{decl}' is an unbound generic parameter. Currently we don't support extending these."
                     ),
                 ),
             }

@@ -62,10 +62,10 @@ impl Compiler {
             "{}{}{}",
             self.nodes[parent].display_name, sep, decl.name.value
         );
-        let span = if !decl.name.value.is_empty() {
-            decl.name.span
-        } else {
+        let span = if decl.name.value.is_empty() {
             decl.span
+        } else {
+            decl.name.span
         };
         let idx = self.nodes.len();
         self.nodes.push(NodeData {

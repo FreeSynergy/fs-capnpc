@@ -9,7 +9,7 @@ use crate::schema::*;
 
 use super::subst::subst;
 
-impl<'a> Vt<'a> {
+impl Vt<'_> {
     pub(super) fn compile_value(&mut self, src: &Expression, ty: &Type) -> Option<DynVal> {
         if let Type::AnyPointer(
             AnyPointer::Parameter { .. } | AnyPointer::ImplicitMethodParameter { .. },
@@ -23,21 +23,18 @@ impl<'a> Vt<'a> {
             return Some(result);
         }
         // If the expected type is a struct, try matching its first field.
-        if let Type::Struct { type_id, brand } = ty {
-            if let Some(n) = self.node(*type_id) {
-                if let Some(sn) = n.struct_node() {
-                    if let Some(f) = sn.fields.first() {
-                        if let FieldKind::Slot { ty: fty, .. } = &f.kind {
-                            let fty = subst(fty, brand);
-                            if self.matches_type(src, &fty, &mut result) {
-                                let mut sv = new_struct_val(&n);
-                                let field = f.clone();
-                                self.set_field(&mut sv, &n, &field, brand, result);
-                                return Some(DynVal::Struct(*type_id, sv));
-                            }
-                        }
-                    }
-                }
+        if let Type::Struct { type_id, brand } = ty
+            && let Some(n) = self.node(*type_id)
+            && let Some(sn) = n.struct_node()
+            && let Some(f) = sn.fields.first()
+            && let FieldKind::Slot { ty: fty, .. } = &f.kind
+        {
+            let fty = subst(fty, brand);
+            if self.matches_type(src, &fty, &mut result) {
+                let mut sv = new_struct_val(&n);
+                let field = f.clone();
+                self.set_field(&mut sv, &n, &field, brand, result);
+                return Some(DynVal::Struct(*type_id, sv));
             }
         }
         let name = self.type_name(ty);
@@ -56,13 +53,13 @@ impl<'a> Vt<'a> {
             DynVal::Bool(_) => matches!(ty, Type::Bool),
             DynVal::Int(v) if *v < 0 => {
                 let min = match ty {
-                    Type::Float32 | Type::Float64 => i64::MIN as i128,
+                    Type::Float32 | Type::Float64 => i128::from(i64::MIN),
                     _ => match int_range(ty) {
                         Some((lo, _)) => lo,
                         None => return false,
                     },
                 };
-                if (*v as i128) < min {
+                if i128::from(*v) < min {
                     self.err(src.span, "Integer value out of range.");
                     *v = min as i64;
                 }
@@ -75,13 +72,13 @@ impl<'a> Vt<'a> {
                     _ => unreachable!(),
                 };
                 let max: u128 = match ty {
-                    Type::Float32 | Type::Float64 => u64::MAX as u128,
+                    Type::Float32 | Type::Float64 => u128::from(u64::MAX),
                     _ => match int_range(ty) {
                         Some((_, hi)) => hi as u128,
                         None => return false,
                     },
                 };
-                if v as u128 > max {
+                if u128::from(v) > max {
                     self.err(src.span, "Integer value out of range.");
                     *result = DynVal::UInt(max as u64);
                 }
@@ -112,12 +109,11 @@ impl<'a> Vt<'a> {
         match &src.kind {
             ExprKind::RelativeName(id) => {
                 if let Type::Enum { type_id, .. } = ty {
-                    if let Some(n) = self.node(*type_id) {
-                        if let NodeKind::Enum(es) = &n.kind {
-                            if let Some(i) = es.iter().position(|e| &e.name == id) {
-                                return Some(DynVal::Enum(*type_id, i as u16));
-                            }
-                        }
+                    if let Some(n) = self.node(*type_id)
+                        && let NodeKind::Enum(es) = &n.kind
+                        && let Some(i) = es.iter().position(|e| &e.name == id)
+                    {
+                        return Some(DynVal::Enum(*type_id, i as u16));
                     }
                 } else {
                     match id.as_str() {
@@ -136,12 +132,9 @@ impl<'a> Vt<'a> {
             | ExprKind::Application { .. }
             | ExprKind::Member { .. } => self.resolve_constant(src),
             ExprKind::Embed(name) => {
-                let data = match self.c.read_embed(self.ts.node_idx, name) {
-                    Some(d) => d,
-                    None => {
-                        self.err(src.span, format!("Couldn't read file for embed: {name}"));
-                        return None;
-                    }
+                let Some(data) = self.c.read_embed(self.ts.node_idx, name) else {
+                    self.err(src.span, format!("Couldn't read file for embed: {name}"));
+                    return None;
                 };
                 match ty {
                     Type::Text => Some(DynVal::Text(data)),

@@ -5,7 +5,7 @@
 use super::cursor::{P, dummy_span};
 use crate::ast::*;
 
-impl<'a> P<'a> {
+impl P<'_> {
     pub(super) fn using_decl(&mut self) -> Option<Declaration> {
         self.attempt(|p| {
             p.keyword("using")?;
@@ -45,7 +45,7 @@ impl<'a> P<'a> {
             let annotations = p.annotations();
             let mut d = Self::decl(
                 name,
-                id.map(DeclId::Uid).unwrap_or(DeclId::Unspecified),
+                id.map_or(DeclId::Unspecified, DeclId::Uid),
                 DeclBody::Const { ty, value },
             );
             d.annotations = annotations;
@@ -61,7 +61,7 @@ impl<'a> P<'a> {
             let annotations = p.annotations();
             let mut d = Self::decl(
                 name,
-                id.map(DeclId::Uid).unwrap_or(DeclId::Unspecified),
+                id.map_or(DeclId::Unspecified, DeclId::Uid),
                 DeclBody::Enum,
             );
             d.annotations = annotations;
@@ -89,7 +89,7 @@ impl<'a> P<'a> {
             let annotations = p.annotations();
             let mut d = Self::decl(
                 name,
-                id.map(DeclId::Uid).unwrap_or(DeclId::Unspecified),
+                id.map_or(DeclId::Unspecified, DeclId::Uid),
                 DeclBody::Struct,
             );
             d.parameters = params;
@@ -112,7 +112,7 @@ impl<'a> P<'a> {
             let annotations = p.annotations();
             let mut d = Self::decl(
                 name,
-                id.map(DeclId::Uid).unwrap_or(DeclId::Unspecified),
+                id.map_or(DeclId::Unspecified, DeclId::Uid),
                 DeclBody::Interface {
                     superclasses: supers.unwrap_or_default().into_iter().flatten().collect(),
                 },

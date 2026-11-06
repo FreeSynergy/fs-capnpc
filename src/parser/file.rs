@@ -9,6 +9,7 @@ use crate::lexer::Statement;
 
 /// The parsed file: a root [`Declaration`] of kind [`DeclBody::File`].
 pub struct ParsedFile {
+    /// Root declaration of the file.
     pub root: std::rc::Rc<Declaration>,
 }
 
@@ -23,8 +24,7 @@ fn generate_random_id() -> u64 {
     } else {
         let t = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos() as u64)
-            .unwrap_or(0x1234_5678_9abc_def0);
+            .map_or(0x1234_5678_9abc_def0, |d| d.as_nanos() as u64);
         t.wrapping_mul(0x9e37_79b9_7f4a_7c15)
     };
     v | (1u64 << 63)
@@ -65,20 +65,19 @@ pub fn parse_file(
         }
     }
 
-    let id = match file_id {
-        Some(i) => i,
-        None => {
-            let id = generate_random_id();
-            if require_id && ctx.errors.is_empty() {
-                ctx.err(
-                    Span::new(0, 0),
-                    format!(
-                        "File does not declare an ID.  I've generated one for you.  Add this line to your file: @0x{id:x};"
-                    ),
-                );
-            }
-            Located::new(id, Span::default())
+    let id = if let Some(i) = file_id {
+        i
+    } else {
+        let id = generate_random_id();
+        if require_id && ctx.errors.is_empty() {
+            ctx.err(
+                Span::new(0, 0),
+                format!(
+                    "File does not declare an ID.  I've generated one for you.  Add this line to your file: @0x{id:x};"
+                ),
+            );
         }
+        Located::new(id, Span::default())
     };
 
     let root = Declaration {

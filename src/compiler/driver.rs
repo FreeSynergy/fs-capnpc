@@ -1,31 +1,39 @@
-//! The `compile_files` entry point.
+//! The compilation driver: load, compile and collect everything for a request.
 //!
-//! Pattern: Facade — one call that loads, compiles and collects everything for a request.
+//! Pattern: Template method — fixed sequence (load -> eager compile -> collect) over injected
+//! collaborators (module loader, error reporter).
 
 use crate::compiler::core::Compiler;
 use crate::compiler::kinds::DEFAULT_EAGERNESS;
 use crate::compiler::node_data::RequestedFile;
 use crate::compiler::options::*;
 use crate::compiler::render::render_errors;
-use crate::error::{Diagnostic, Error, Span};
+use crate::error::{Diagnostic, Error, ErrorReporter, Span};
 use crate::schema::Id;
-use crate::source::SourceLoader;
+use crate::source::ModuleLoader;
 
-/// Compile the given files. On errors returns all diagnostics rendered with line/column.
-pub fn compile_files(opts: &CompileOptions) -> Result<CompileOutput, Error> {
-    let mut loader = SourceLoader::new();
-    loader.import_paths = opts.import_paths.clone();
-    loader.src_prefixes = opts.src_prefixes.clone();
+/// Compile `opts.files` using the given collaborators.
+///
+/// # Errors
+/// On errors returns all diagnostics rendered with line/column.
+pub fn run_compilation(
+    opts: &CompileOptions,
+    mut loader: ModuleLoader,
+    reporter: Box<dyn ErrorReporter>,
+) -> Result<CompileOutput, Error> {
+    loader.import_paths.clone_from(&opts.import_paths);
+    loader.src_prefixes.clone_from(&opts.src_prefixes);
     loader.no_standard_import = opts.no_standard_import;
     let mut c = Compiler::new(loader);
+    c.reporter = reporter;
 
     for f in &opts.files {
         let (dir, path) = c.loader.interpret_source_file(f);
         let mut errs = vec![];
         let m = c.loader.load_module(&dir, &path, &mut errs);
-        c.diagnostics.extend(errs);
+        c.reporter.report_all(errs);
         let Some(m) = m else {
-            c.diagnostics.push(Diagnostic {
+            c.reporter.report(Diagnostic {
                 file: f.display().to_string(),
                 span: Span::default(),
                 message: "no such file".into(),

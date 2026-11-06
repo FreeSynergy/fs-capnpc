@@ -27,7 +27,7 @@ impl Enc {
     fn ptr_word(slot: usize, target: usize, kind: u32, hi: u32) -> u64 {
         let off = (target as i64 - (slot as i64 + 1)) as i32;
         let lo = ((off as u32) << 2) | kind;
-        (lo as u64) | ((hi as u64) << 32)
+        u64::from(lo) | (u64::from(hi) << 32)
     }
 
     fn encode_struct_body(&mut self, sv: &StructVal) -> usize {
@@ -50,7 +50,7 @@ impl Enc {
                     slot,
                     pos,
                     0,
-                    sv.data_words as u32 | ((sv.pointer_count as u32) << 16),
+                    u32::from(sv.data_words) | (u32::from(sv.pointer_count) << 16),
                 );
             }
             Ptr::Text(t) => {
@@ -112,10 +112,10 @@ impl Enc {
                     let per = *data_words as usize + *pointer_count as usize;
                     let pos = self.alloc(1 + elems.len() * per);
                     self.words[pos] = Self::ptr_word(pos, elems.len(), 0, 0) & 0xffff_ffff
-                        | (((*data_words as u64) | ((*pointer_count as u64) << 16)) << 32);
+                        | ((u64::from(*data_words) | (u64::from(*pointer_count) << 16)) << 32);
                     // tag word: element count in the offset field
                     self.words[pos] = ((elems.len() as u64) << 2)
-                        | (((*data_words as u64) | ((*pointer_count as u64) << 16)) << 32);
+                        | ((u64::from(*data_words) | (u64::from(*pointer_count) << 16)) << 32);
                     for (i, e) in elems.iter().enumerate() {
                         let base = pos + 1 + i * per;
                         self.put_bytes(base, &e.data);

@@ -7,7 +7,7 @@ use super::cursor::Lexer;
 use super::types::{Body, Statement};
 use crate::error::Span;
 
-impl<'a> Lexer<'a> {
+impl Lexer<'_> {
     pub(super) fn statement_sequence(&mut self) -> Vec<Statement> {
         let mut out = vec![];
         self.skip_comments_and_ws();

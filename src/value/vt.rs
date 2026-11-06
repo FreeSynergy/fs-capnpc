@@ -22,7 +22,7 @@ pub fn compile_value(
         is_bootstrap,
     };
     let v = vt.compile_value(source, ty)?;
-    Some(vt.to_value(v, ty))
+    Some(vt.convert_value(v, ty))
 }
 
 pub(super) struct Vt<'a> {
@@ -31,7 +31,7 @@ pub(super) struct Vt<'a> {
     pub(super) is_bootstrap: bool,
 }
 
-impl<'a> Vt<'a> {
+impl Vt<'_> {
     pub(super) fn err(&mut self, span: crate::error::Span, msg: impl Into<String>) {
         let m = self.ts.module;
         self.c.add_error(m, span, msg);

@@ -9,8 +9,8 @@ use crate::schema::{AnyPointer, Type, Unconstrained};
 impl BrandedDecl {
     /// `compileAsType`: returns the schema type, or `None` after reporting an error.
     pub fn compile_as_type(&self, c: &mut Compiler, module: usize) -> Option<Type> {
-        match self.kind() {
-            Some(kind) => match kind {
+        if let Some(kind) = self.kind() {
+            match kind {
                 DeclKind::Enum => {
                     let (type_id, brand) = self.id_and_brand(c);
                     Some(Type::Enum { type_id, brand })
@@ -77,25 +77,24 @@ impl BrandedDecl {
                     Unconstrained::Capability,
                 ))),
                 _ => {
-                    let msg = format!("'{}' is not a type.", self.to_string());
+                    let msg = format!("'{self}' is not a type.");
                     self.add_error(c, module, msg);
                     None
                 }
-            },
-            None => {
-                let ResolveResult::Param(var) = &self.body else {
-                    unreachable!()
-                };
-                if var.id == 0 {
-                    Some(Type::AnyPointer(AnyPointer::ImplicitMethodParameter {
-                        parameter_index: var.index as u16,
-                    }))
-                } else {
-                    Some(Type::AnyPointer(AnyPointer::Parameter {
-                        scope_id: var.id,
-                        parameter_index: var.index as u16,
-                    }))
-                }
+            }
+        } else {
+            let ResolveResult::Param(var) = &self.body else {
+                unreachable!()
+            };
+            if var.id == 0 {
+                Some(Type::AnyPointer(AnyPointer::ImplicitMethodParameter {
+                    parameter_index: var.index as u16,
+                }))
+            } else {
+                Some(Type::AnyPointer(AnyPointer::Parameter {
+                    scope_id: var.id,
+                    parameter_index: var.index as u16,
+                }))
             }
         }
     }

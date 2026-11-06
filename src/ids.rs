@@ -1,4 +1,8 @@
-//! Type id generation (counterpart of `type-id.c++`). IDs are the first 8 bytes of an MD5 digest,
+//! Type id generation (counterpart of `type-id.c++`).
+//!
+//! Pattern: Strategy — id derivation is a pure function from a parent id and a name.
+//!
+//! IDs are the first 8 bytes of an MD5 digest,
 //! read big-endian, with the top bit set.
 
 fn md5(data: &[u8]) -> [u8; 16] {
@@ -8,7 +12,7 @@ fn md5(data: &[u8]) -> [u8; 16] {
         15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
     ];
     let k: Vec<u32> = (0..64)
-        .map(|i| ((i as f64 + 1.0).sin().abs() * 4294967296.0) as u32)
+        .map(|i| ((f64::from(i) + 1.0).sin().abs() * 4294967296.0) as u32)
         .collect();
     let (mut a0, mut b0, mut c0, mut d0) =
         (0x67452301u32, 0xefcdab89u32, 0x98badcfeu32, 0x10325476u32);
@@ -68,7 +72,7 @@ fn md5(data: &[u8]) -> [u8; 16] {
 fn first8(digest: &[u8; 16]) -> u64 {
     let mut r = 0u64;
     for &b in &digest[..8] {
-        r = (r << 8) | b as u64;
+        r = (r << 8) | u64::from(b);
     }
     r | (1u64 << 63)
 }
@@ -91,7 +95,7 @@ pub fn generate_group_id(parent_id: u64, group_index: u16) -> u64 {
 pub fn generate_method_params_id(parent_id: u64, method_ordinal: u16, is_results: bool) -> u64 {
     let mut bytes = parent_id.to_le_bytes().to_vec();
     bytes.extend_from_slice(&method_ordinal.to_le_bytes());
-    bytes.push(is_results as u8);
+    bytes.push(u8::from(is_results));
     first8(&md5(&bytes))
 }
 
@@ -100,7 +104,11 @@ mod tests {
     use super::*;
 
     fn hex(d: &[u8]) -> String {
-        d.iter().map(|b| format!("{b:02x}")).collect()
+        d.iter().fold(String::new(), |mut s, b| {
+            use std::fmt::Write;
+            let _ = write!(s, "{b:02x}");
+            s
+        })
     }
 
     #[test]

@@ -12,15 +12,15 @@ pub(super) fn subst(ty: &Type, brand: &Brand) -> Type {
             parameter_index,
         }) => {
             for s in &brand.scopes {
-                if s.scope_id == *scope_id {
-                    if let BrandScopeKind::Bind(b) = &s.kind {
-                        return match b.get(*parameter_index as usize) {
-                            Some(Binding::Type(t)) => t.clone(),
-                            Some(Binding::Unbound) | None => {
-                                Type::AnyPointer(AnyPointer::Unconstrained(Unconstrained::AnyKind))
-                            }
-                        };
-                    }
+                if s.scope_id == *scope_id
+                    && let BrandScopeKind::Bind(b) = &s.kind
+                {
+                    return match b.get(*parameter_index as usize) {
+                        Some(Binding::Type(t)) => t.clone(),
+                        Some(Binding::Unbound) | None => {
+                            Type::AnyPointer(AnyPointer::Unconstrained(Unconstrained::AnyKind))
+                        }
+                    };
                 }
             }
             ty.clone()

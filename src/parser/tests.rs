@@ -53,7 +53,7 @@ fn annotation_decl_and_consts() {
     assert!(errs.is_empty(), "{errs:?}");
     match &f.root.nested[0].body {
         DeclBody::Annotation { targets, .. } => {
-            assert!(targets.structure && targets.field && !targets.file)
+            assert!(targets.structure && targets.field && !targets.file);
         }
         _ => panic!(),
     }

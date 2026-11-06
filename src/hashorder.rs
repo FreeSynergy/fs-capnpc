@@ -1,5 +1,7 @@
 //! Iteration order of the official compiler's `sourceInfoById` map.
 //!
+//! Pattern: Model — replays the C++ standard library's hash table so output order matches exactly.
+//!
 //! The official compiler keeps source info in a `std::unordered_map<uint64_t, ...>` (libc++ when
 //! built for WASI) and emits it in iteration order. To produce an identical request we replay the
 //! insertions into a model of libc++'s `__hash_table` (singly linked list + bucket array, identity
@@ -13,7 +15,7 @@ fn is_prime(n: usize) -> bool {
     }
     let mut i = 2;
     while i * i <= n {
-        if n % i == 0 {
+        if n.is_multiple_of(i) {
             return false;
         }
         i += 1;
@@ -52,7 +54,7 @@ impl Table {
     }
 
     fn constrain(h: u64, bc: usize) -> usize {
-        if bc & (bc - 1) == 0 {
+        if bc.is_power_of_two() {
             (h as usize) & (bc - 1)
         } else {
             (h % bc as u64) as usize
@@ -80,8 +82,7 @@ impl Table {
         let mut chash = Self::constrain(self.keys[first], nbc);
         self.buckets[chash] = Some(pp);
         pp = Before::Node(first);
-        loop {
-            let Some(cp) = self.next_of(pp) else { break };
+        while let Some(cp) = self.next_of(pp) {
             let nhash = Self::constrain(self.keys[cp], nbc);
             if nhash == chash {
                 pp = Before::Node(cp);
@@ -104,7 +105,7 @@ impl Table {
         let bc = self.buckets.len();
         let size = self.keys.len();
         if bc == 0 || size + 1 > bc {
-            let is_pow2 = bc > 2 && bc & (bc - 1) == 0;
+            let is_pow2 = bc > 2 && bc.is_power_of_two();
             let want = (2 * bc + usize::from(!is_pow2)).max(size + 1);
             let mut n = want;
             if n == 1 {

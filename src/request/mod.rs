@@ -5,6 +5,7 @@
 
 mod annotations;
 mod assemble;
+mod emitter;
 mod encode;
 mod field;
 mod node;
@@ -13,3 +14,4 @@ mod types;
 mod values;
 
 pub use assemble::{build_request, request_bytes};
+pub use emitter::{Emitter, RequestEmitter};

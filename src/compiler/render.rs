@@ -9,7 +9,7 @@ use std::collections::HashSet;
 pub(super) fn render_errors(c: &Compiler) -> Error {
     let mut rendered = vec![];
     let mut seen = HashSet::new();
-    for d in &c.diagnostics {
+    for d in c.reporter.diagnostics() {
         let key = (d.file.clone(), d.span, d.message.clone());
         if !seen.insert(key) {
             continue;
@@ -23,7 +23,7 @@ pub(super) fn render_errors(c: &Compiler) -> Error {
         rendered.push(d.render(src));
     }
     Error {
-        diagnostics: c.diagnostics.clone(),
+        diagnostics: c.reporter.diagnostics().to_vec(),
         rendered,
     }
 }

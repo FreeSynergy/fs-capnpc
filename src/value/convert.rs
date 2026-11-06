@@ -6,8 +6,8 @@ use super::dynval::*;
 use super::vt::Vt;
 use crate::schema::*;
 
-impl<'a> Vt<'a> {
-    pub(super) fn to_value(&mut self, v: DynVal, ty: &Type) -> Value {
+impl Vt<'_> {
+    pub(super) fn convert_value(&mut self, v: DynVal, ty: &Type) -> Value {
         match ty {
             Type::Void => Value::Void,
             Type::Bool => Value::Bool(matches!(v, DynVal::Bool(true))),
@@ -55,7 +55,7 @@ pub(super) fn prim_bits(v: &DynVal, ty: &Type) -> u64 {
                 DynVal::UInt(u) => *u as f32,
                 _ => 0.0,
             };
-            f.to_bits() as u64
+            u64::from(f.to_bits())
         }
         Type::Float64 => {
             let f = match v {
@@ -66,9 +66,9 @@ pub(super) fn prim_bits(v: &DynVal, ty: &Type) -> u64 {
             };
             f.to_bits()
         }
-        Type::Bool => matches!(v, DynVal::Bool(true)) as u64,
+        Type::Bool => u64::from(matches!(v, DynVal::Bool(true))),
         Type::Enum { .. } => match v {
-            DynVal::Enum(_, e) => *e as u64,
+            DynVal::Enum(_, e) => u64::from(*e),
             _ => 0,
         },
         _ => {
@@ -76,7 +76,7 @@ pub(super) fn prim_bits(v: &DynVal, ty: &Type) -> u64 {
                 DynVal::Int(i) => *i as u64,
                 DynVal::UInt(u) => *u,
                 DynVal::Float(f) => *f as i64 as u64,
-                DynVal::Bool(b) => *b as u64,
+                DynVal::Bool(b) => u64::from(*b),
                 _ => 0,
             };
             match ty {
@@ -91,18 +91,18 @@ pub(super) fn prim_bits(v: &DynVal, ty: &Type) -> u64 {
 
 pub(super) fn default_bits(v: &Value) -> u64 {
     match v {
-        Value::Int8(x) => *x as u8 as u64,
-        Value::Int16(x) => *x as u16 as u64,
-        Value::Int32(x) => *x as u32 as u64,
+        Value::Int8(x) => u64::from(*x as u8),
+        Value::Int16(x) => u64::from(*x as u16),
+        Value::Int32(x) => u64::from(*x as u32),
         Value::Int64(x) => *x as u64,
-        Value::UInt8(x) => *x as u64,
-        Value::UInt16(x) => *x as u64,
-        Value::UInt32(x) => *x as u64,
+        Value::UInt8(x) => u64::from(*x),
+        Value::UInt16(x) => u64::from(*x),
+        Value::UInt32(x) => u64::from(*x),
         Value::UInt64(x) => *x,
-        Value::Float32(x) => x.to_bits() as u64,
+        Value::Float32(x) => u64::from(x.to_bits()),
         Value::Float64(x) => x.to_bits(),
-        Value::Enum(x) => *x as u64,
-        Value::Bool(b) => *b as u64,
+        Value::Enum(x) => u64::from(*x),
+        Value::Bool(b) => u64::from(*b),
         _ => 0,
     }
 }

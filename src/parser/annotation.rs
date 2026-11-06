@@ -5,7 +5,7 @@
 use super::cursor::P;
 use crate::ast::*;
 
-impl<'a> P<'a> {
+impl P<'_> {
     pub(super) fn annotation(&mut self) -> Option<AnnotationApplication> {
         self.attempt(|p| {
             p.op("$")?;
@@ -102,7 +102,7 @@ impl<'a> P<'a> {
             }
             let mut d = Self::decl(
                 name,
-                id.map(DeclId::Uid).unwrap_or(DeclId::Unspecified),
+                id.map_or(DeclId::Unspecified, DeclId::Uid),
                 DeclBody::Annotation { ty, targets },
             );
             d.annotations = annotations;

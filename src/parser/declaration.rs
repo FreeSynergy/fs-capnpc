@@ -8,7 +8,7 @@ use crate::ast::*;
 use crate::error::Span;
 use crate::lexer::Token;
 
-impl<'a> P<'a> {
+impl P<'_> {
     pub(super) fn uid(&mut self) -> Option<Located<u64>> {
         self.attempt(|p| {
             p.op("@")?;

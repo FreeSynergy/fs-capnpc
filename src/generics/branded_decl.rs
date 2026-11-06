@@ -21,8 +21,22 @@ pub struct BrandedDecl {
     pub source: Option<Rc<Expression>>,
 }
 
-fn err_span(source: &Option<Rc<Expression>>) -> Span {
-    source.as_ref().map(|s| s.span).unwrap_or_default()
+fn err_span(source: Option<&Rc<Expression>>) -> Span {
+    source.map(|s| s.span).unwrap_or_default()
+}
+
+impl std::fmt::Display for BrandedDecl {
+    /// Source text of the expression this declaration came from.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let text = match &self.source {
+            Some(s) => expression_string(s),
+            None => expression_string(&Expression {
+                kind: ExprKind::Unknown,
+                span: Span::default(),
+            }),
+        };
+        f.write_str(&text)
+    }
 }
 
 impl BrandedDecl {
@@ -61,18 +75,7 @@ impl BrandedDecl {
 
     /// Record an error at `span` in `module`.
     pub fn add_error(&self, c: &mut Compiler, module: usize, msg: impl Into<String>) {
-        c.add_error(module, err_span(&self.source), msg);
-    }
-
-    /// Source text of the expression this declaration came from.
-    pub fn to_string(&self) -> String {
-        match &self.source {
-            Some(s) => expression_string(s),
-            None => expression_string(&Expression {
-                kind: ExprKind::Unknown,
-                span: Span::default(),
-            }),
-        }
+        c.add_error(module, err_span(self.source.as_ref()), msg);
     }
 
     /// Bind explicit type arguments to this declaration.
@@ -122,16 +125,15 @@ impl BrandedDecl {
 
     /// Element type of a `List(T)` declaration.
     pub fn get_list_param(&self) -> Option<BrandedDecl> {
-        let d = match &self.body {
-            ResolveResult::Decl(d) => d,
-            _ => panic!("not a decl"),
+        let ResolveResult::Decl(d) = &self.body else {
+            panic!("not a decl")
         };
         assert_eq!(d.kind, DeclKind::BuiltinList);
         let params = self.brand.as_ref().unwrap().get_params(d.id)?;
-        if params.len() != 1 {
-            None
-        } else {
+        if params.len() == 1 {
             Some(params[0].clone())
+        } else {
+            None
         }
     }
 

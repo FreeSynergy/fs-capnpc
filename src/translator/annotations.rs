@@ -30,37 +30,34 @@ pub fn compile_annotation_applications(
                     let (id, brand) = decl.id_and_brand(c);
                     ann.id = id;
                     ann.brand = brand;
-                    if let Some(anode) = c.resolve_bootstrap_schema(id) {
-                        if let NodeKind::Annotation { ty, targets } = &anode.kind {
-                            if !has_target(targets, target) {
-                                c.add_error(
-                                    ts.module,
-                                    name.span,
-                                    format!(
-                                        "'{}' cannot be applied to this kind of declaration.",
-                                        expression_string(name)
-                                    ),
-                                );
+                    if let Some(anode) = c.resolve_bootstrap_schema(id)
+                        && let NodeKind::Annotation { ty, targets } = &anode.kind
+                    {
+                        if !has_target(targets, target) {
+                            c.add_error(
+                                ts.module,
+                                name.span,
+                                format!(
+                                    "'{}' cannot be applied to this kind of declaration.",
+                                    expression_string(name)
+                                ),
+                            );
+                        }
+                        match &a.value {
+                            None => {
+                                if matches!(ty, Type::Void) {
+                                    ann.value = Value::Void;
+                                } else {
+                                    c.add_error(
+                                        ts.module,
+                                        name.span,
+                                        format!("'{}' requires a value.", expression_string(name)),
+                                    );
+                                    ann.value = default_default_value(ty);
+                                }
                             }
-                            match &a.value {
-                                None => {
-                                    if matches!(ty, Type::Void) {
-                                        ann.value = Value::Void;
-                                    } else {
-                                        c.add_error(
-                                            ts.module,
-                                            name.span,
-                                            format!(
-                                                "'{}' requires a value.",
-                                                expression_string(name)
-                                            ),
-                                        );
-                                        ann.value = default_default_value(ty);
-                                    }
-                                }
-                                Some(expr) => {
-                                    ann.value = compile_bootstrap_value(c, ts, expr, ty);
-                                }
+                            Some(expr) => {
+                                ann.value = compile_bootstrap_value(c, ts, expr, ty);
                             }
                         }
                     }

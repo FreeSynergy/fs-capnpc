@@ -39,10 +39,10 @@ impl Ctx {
         let (mut parsed, member_level) = result.unwrap();
         match &mut parsed {
             Parsed::Decl(d) => {
-                d.doc_comment = st.doc_comment.clone();
+                d.doc_comment.clone_from(&st.doc_comment);
                 d.span = st.span;
             }
-            Parsed::NakedId(_, doc) => *doc = st.doc_comment.clone(),
+            Parsed::NakedId(_, doc) => doc.clone_from(&st.doc_comment),
             Parsed::NakedAnnotation(_) => {}
         }
         match (&st.body, member_level) {

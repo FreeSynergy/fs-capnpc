@@ -18,12 +18,12 @@ pub fn translate_node(c: &mut Compiler, idx: NodeIdx) -> Translator {
     if let Some(dot) = display.rfind('.') {
         prefix = dot as u32 + 1;
     }
-    if let Some(colon) = display.rfind(':') {
-        if colon as u32 > prefix {
-            prefix = colon as u32 + 1;
-        }
+    if let Some(colon) = display.rfind(':')
+        && colon as u32 > prefix
+    {
+        prefix = colon as u32 + 1;
     }
-    let scope_id = c.nodes[idx].parent.map(|p| c.nodes[p].id).unwrap_or(0);
+    let scope_id = c.nodes[idx].parent.map_or(0, |p| c.nodes[p].id);
     let nested: Vec<(String, Id)> = c.nodes[idx]
         .nested
         .iter()
@@ -107,7 +107,7 @@ pub(crate) fn compile_node(c: &mut Compiler, ts: &mut Translator, decl: &Declara
     ts.wip.annotations = compile_annotation_applications(c, ts, &decl.annotations, target);
 
     ts.source_info.id = ts.wip.id;
-    ts.source_info.doc_comment = decl.doc_comment.clone();
+    ts.source_info.doc_comment.clone_from(&decl.doc_comment);
     ts.source_info.start_byte = decl.span.start;
     ts.source_info.end_byte = decl.span.end;
 }

@@ -61,10 +61,10 @@ impl Compiler {
             }
         }
 
-        if eagerness & PARENTS != 0 {
-            if let Some(p) = self.nodes[idx].parent {
-                self.traverse(p, eagerness, seen, si);
-            }
+        if eagerness & PARENTS != 0
+            && let Some(p) = self.nodes[idx].parent
+        {
+            self.traverse(p, eagerness, seen, si);
         }
 
         if eagerness & CHILDREN != 0 && self.ensure_state(idx, State::Expanded) {

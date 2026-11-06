@@ -5,7 +5,7 @@
 use super::cursor::P;
 use crate::ast::*;
 
-impl<'a> P<'a> {
+impl P<'_> {
     pub(super) fn field_decl(&mut self) -> Option<Declaration> {
         self.attempt(|p| {
             let name = p.ident()?;
@@ -43,18 +43,17 @@ impl<'a> P<'a> {
             let annotations = p.annotations();
             Some((name, ord, missing_excl, missing_colon, annotations))
         });
-        let (name, ord, missing_excl, missing_colon, annotations) = match named {
-            Some(n) => n,
-            None => {
-                // Unnamed union: `union` alone.
-                let save = self.pos;
-                let kw = self.keyword("union")?;
-                if !self.at_end() {
-                    self.pos = save;
-                    return None;
-                }
-                (Located::new(String::new(), kw), None, false, false, vec![])
+        let (name, ord, missing_excl, missing_colon, annotations) = if let Some(n) = named {
+            n
+        } else {
+            // Unnamed union: `union` alone.
+            let save = self.pos;
+            let kw = self.keyword("union")?;
+            if !self.at_end() {
+                self.pos = save;
+                return None;
             }
+            (Located::new(String::new(), kw), None, false, false, vec![])
         };
         if missing_excl {
             let span = ord.as_ref().unwrap().span;
@@ -64,7 +63,7 @@ impl<'a> P<'a> {
             let span = ord.as_ref().unwrap().span;
             self.err(span, "As of Cap'n Proto v0.3, the 'union' keyword should be prefixed with a colon for named unions, e.g. `foo :union {`.");
         }
-        let id = ord.map(DeclId::Ordinal).unwrap_or(DeclId::Unspecified);
+        let id = ord.map_or(DeclId::Unspecified, DeclId::Ordinal);
         let mut d = Self::decl(name, id, DeclBody::Union);
         d.annotations = annotations;
         Some(d)

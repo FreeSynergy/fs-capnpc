@@ -7,7 +7,7 @@ use crate::ast::*;
 use crate::error::Span;
 use crate::lexer::{Tok, Token};
 
-impl<'a> P<'a> {
+impl P<'_> {
     pub(super) fn expression(&mut self) -> Option<Expression> {
         let mut base = self.base_expression()?;
         loop {
@@ -121,15 +121,14 @@ impl<'a> P<'a> {
             }
             Tok::Op(o) if o == "." => {
                 self.pos += 1;
-                match self.ident() {
-                    Some(n) => Some(Expression {
+                if let Some(n) = self.ident() {
+                    Some(Expression {
                         kind: ExprKind::AbsoluteName(n.value),
                         span: Span::new(span.start, n.span.end),
-                    }),
-                    None => {
-                        self.pos -= 1;
-                        None
-                    }
+                    })
+                } else {
+                    self.pos -= 1;
+                    None
                 }
             }
             Tok::Str(_) => {
@@ -181,19 +180,19 @@ impl<'a> P<'a> {
                 let is_import = s == "import";
                 let save = self.pos;
                 self.pos += 1;
-                if let Some(t2) = self.peek() {
-                    if let Tok::Str(bytes) = &t2.tok {
-                        self.pos += 1;
-                        let v = String::from_utf8_lossy(bytes).into_owned();
-                        return Some(Expression {
-                            kind: if is_import {
-                                ExprKind::Import(v)
-                            } else {
-                                ExprKind::Embed(v)
-                            },
-                            span: Span::new(span.start, t2.span.end),
-                        });
-                    }
+                if let Some(t2) = self.peek()
+                    && let Tok::Str(bytes) = &t2.tok
+                {
+                    self.pos += 1;
+                    let v = String::from_utf8_lossy(bytes).into_owned();
+                    return Some(Expression {
+                        kind: if is_import {
+                            ExprKind::Import(v)
+                        } else {
+                            ExprKind::Embed(v)
+                        },
+                        span: Span::new(span.start, t2.span.end),
+                    });
                 }
                 self.pos = save;
                 self.pos += 1;

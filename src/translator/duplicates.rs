@@ -83,14 +83,14 @@ pub(crate) fn check_duplicate_names(
             | DeclBody::Method { .. }
             | DeclBody::Field { .. }
             | DeclBody::Union
-            | DeclBody::Group => {
-                if first.is_some_and(|ch| !ch.is_ascii_lowercase()) {
-                    c.add_error(
-                        module,
-                        name.span,
-                        "Non-type names must begin with a lower-case letter.",
-                    );
-                }
+            | DeclBody::Group
+                if first.is_some_and(|ch| !ch.is_ascii_lowercase()) =>
+            {
+                c.add_error(
+                    module,
+                    name.span,
+                    "Non-type names must begin with a lower-case letter.",
+                );
             }
             _ => {}
         }
@@ -169,28 +169,32 @@ impl DupOrdinal {
         }
     }
     pub(crate) fn check(&mut self, c: &mut Compiler, module: usize, ord: &Located<u64>) {
-        if ord.value < self.expected {
-            c.add_error(module, ord.span, "Duplicate ordinal number.");
-            if let Some(last) = self.last.take() {
+        match ord.value.cmp(&self.expected) {
+            std::cmp::Ordering::Less => {
+                c.add_error(module, ord.span, "Duplicate ordinal number.");
+                if let Some(last) = self.last.take() {
+                    c.add_error(
+                        module,
+                        last.span,
+                        format!("Ordinal @{} originally used here.", last.value),
+                    );
+                }
+            }
+            std::cmp::Ordering::Greater => {
                 c.add_error(
                     module,
-                    last.span,
-                    format!("Ordinal @{} originally used here.", last.value),
+                    ord.span,
+                    format!(
+                        "Skipped ordinal @{}.  Ordinals must be sequential with no holes.",
+                        self.expected
+                    ),
                 );
+                self.expected = ord.value + 1;
             }
-        } else if ord.value > self.expected {
-            c.add_error(
-                module,
-                ord.span,
-                format!(
-                    "Skipped ordinal @{}.  Ordinals must be sequential with no holes.",
-                    self.expected
-                ),
-            );
-            self.expected = ord.value + 1;
-        } else {
-            self.expected += 1;
-            self.last = Some(ord.clone());
+            std::cmp::Ordering::Equal => {
+                self.expected += 1;
+                self.last = Some(ord.clone());
+            }
         }
     }
 }

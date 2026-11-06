@@ -11,7 +11,7 @@ use std::rc::Rc;
 
 use super::subst::subst;
 
-impl<'a> Vt<'a> {
+impl Vt<'_> {
     pub(super) fn fill_struct_value(
         &mut self,
         sv: &mut StructVal,
@@ -55,23 +55,23 @@ impl<'a> Vt<'a> {
                         self.write_discriminant(sv, node, &field);
                         let first = gnode.struct_node().and_then(|s| s.fields.first()).cloned();
                         let mut done = false;
-                        if let Some(gf) = first {
-                            if let FieldKind::Slot { ty: gty, .. } = &gf.kind {
-                                let gty = subst(gty, brand);
-                                if let Some(mut r) = self.compile_value_inner(
-                                    &a.value,
-                                    &Type::Struct {
-                                        type_id: *type_id,
-                                        brand: brand.clone(),
-                                    },
-                                ) {
-                                    if self.matches_type(&a.value, &gty, &mut r) {
-                                        self.set_field(sv, &gnode, &gf, brand, r);
-                                        done = true;
-                                    }
-                                } else {
-                                    continue;
+                        if let Some(gf) = first
+                            && let FieldKind::Slot { ty: gty, .. } = &gf.kind
+                        {
+                            let gty = subst(gty, brand);
+                            if let Some(mut r) = self.compile_value_inner(
+                                &a.value,
+                                &Type::Struct {
+                                    type_id: *type_id,
+                                    brand: brand.clone(),
+                                },
+                            ) {
+                                if self.matches_type(&a.value, &gty, &mut r) {
+                                    self.set_field(sv, &gnode, &gf, brand, r);
+                                    done = true;
                                 }
+                            } else {
+                                continue;
                             }
                         }
                         if !done {
@@ -84,12 +84,12 @@ impl<'a> Vt<'a> {
     }
 
     pub(super) fn write_discriminant(&mut self, sv: &mut StructVal, node: &Node, field: &Field) {
-        if field.discriminant_value != NO_DISCRIMINANT {
-            if let Some(s) = node.struct_node() {
-                let off = s.discriminant_offset as usize * 2;
-                if off + 2 <= sv.data.len() {
-                    sv.data[off..off + 2].copy_from_slice(&field.discriminant_value.to_le_bytes());
-                }
+        if field.discriminant_value != NO_DISCRIMINANT
+            && let Some(s) = node.struct_node()
+        {
+            let off = s.discriminant_offset as usize * 2;
+            if off + 2 <= sv.data.len() {
+                sv.data[off..off + 2].copy_from_slice(&field.discriminant_value.to_le_bytes());
             }
         }
     }

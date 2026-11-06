@@ -28,7 +28,7 @@ pub fn mine_bytes(files: &[&str], src_prefix: &str, imports: &[&str]) -> Result<
         } else {
             vec![src_prefix.into()]
         },
-        import_paths: imports.iter().map(|i| i.into()).collect(),
+        import_paths: imports.iter().map(std::convert::Into::into).collect(),
         no_standard_import: false,
     };
     let out = compile_files(&opts).map_err(|e| e.to_string())?;
@@ -87,11 +87,17 @@ pub fn compare(files: &[&str], src_prefix: &str, imports: &[&str]) -> Report {
         }
     }
     // Order independent check.
-    let mut ids_a: Vec<u64> = na.iter().map(|n| n.get_id()).collect();
-    let mut ids_b: Vec<u64> = nb.iter().map(|n| n.get_id()).collect();
+    let mut ids_a: Vec<u64> = na
+        .iter()
+        .map(capnp_compiler::schema_capnp::node::Reader::get_id)
+        .collect();
+    let mut ids_b: Vec<u64> = nb
+        .iter()
+        .map(capnp_compiler::schema_capnp::node::Reader::get_id)
+        .collect();
     if ids_a != ids_b {
-        ids_a.sort();
-        ids_b.sort();
+        ids_a.sort_unstable();
+        ids_b.sort_unstable();
         if ids_a == ids_b {
             rep.differences
                 .push("node order differs (same set of ids)".into());
@@ -121,13 +127,13 @@ pub fn compare(files: &[&str], src_prefix: &str, imports: &[&str]) -> Report {
         .get_source_info()
         .unwrap()
         .iter()
-        .map(|s| (s.get_id(), format!("{:#?}", s)))
+        .map(|s| (s.get_id(), format!("{s:#?}")))
         .collect();
     let mut sib: Vec<(u64, String)> = rb
         .get_source_info()
         .unwrap()
         .iter()
-        .map(|s| (s.get_id(), format!("{:#?}", s)))
+        .map(|s| (s.get_id(), format!("{s:#?}")))
         .collect();
     let order_a: Vec<u64> = sia.iter().map(|x| x.0).collect();
     let order_b: Vec<u64> = sib.iter().map(|x| x.0).collect();
@@ -171,13 +177,12 @@ pub fn first_diff(a: &str, b: &str) -> String {
 
 pub fn assert_same(files: &[&str], src_prefix: &str, imports: &[&str]) {
     let rep = compare(files, src_prefix, imports);
-    if !rep.differences.is_empty() {
-        panic!(
-            "{} differences:\n{}",
-            rep.differences.len(),
-            rep.differences.join("\n---\n")
-        );
-    }
+    assert!(
+        rep.differences.is_empty(),
+        "{} differences:\n{}",
+        rep.differences.len(),
+        rep.differences.join("\n---\n")
+    );
     assert!(
         rep.bytes_identical,
         "semantically equal but the encoded bytes differ"

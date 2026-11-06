@@ -18,7 +18,7 @@ mod state;
 mod traverse;
 
 pub use core::Compiler;
-pub use driver::compile_files;
+pub use driver::run_compilation;
 pub use kinds::*;
 pub use loader_sim::LoaderSim;
 pub use node_data::*;

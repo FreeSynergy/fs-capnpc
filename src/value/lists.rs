@@ -7,7 +7,7 @@ use super::dynval::*;
 use super::vt::Vt;
 use crate::schema::*;
 
-impl<'a> Vt<'a> {
+impl Vt<'_> {
     pub(super) fn build_list(&mut self, elem: &Type, vals: Vec<Option<DynVal>>) -> ListVal {
         let n = vals.len();
         match elem {

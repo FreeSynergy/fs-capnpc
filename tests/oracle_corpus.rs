@@ -4,7 +4,10 @@ mod common;
 use std::path::Path;
 
 fn walk(dir: &Path, out: &mut Vec<String>) {
-    for e in std::fs::read_dir(dir).unwrap().filter_map(|e| e.ok()) {
+    for e in std::fs::read_dir(dir)
+        .unwrap()
+        .filter_map(std::result::Result::ok)
+    {
         let p = e.path();
         if p.is_dir() {
             walk(&p, out);
@@ -27,10 +30,10 @@ fn corpus_matches_official_compiler() {
     let mut failures = vec![];
     let mut ok = 0;
     for f in corpus() {
-        if let Some(o) = &only {
-            if !f.contains(o.as_str()) {
-                continue;
-            }
+        if let Some(o) = &only
+            && !f.contains(o.as_str())
+        {
+            continue;
         }
         let name = f.trim_start_matches("tests/schemas/").to_string();
         let rep = common::compare(&[&f], "tests/schemas", &["tests/schemas"]);

@@ -94,10 +94,10 @@ impl StructTranslator {
                 }
                 MKind::Union => {
                     let u = self.members[m].union_scope.unwrap();
-                    if !self.layout.add_discriminant(u) {
-                        if let Some(o) = &self.members[m].ordinal {
-                            c.add_error(ts.module, o.span, "Union ordinal, if specified, must be greater than no more than one of its member ordinals (i.e. there can only be one field retroactively unionized).");
-                        }
+                    if !self.layout.add_discriminant(u)
+                        && let Some(o) = &self.members[m].ordinal
+                    {
+                        c.add_error(ts.module, o.span, "Union ordinal, if specified, must be greater than no more than one of its member ordinals (i.e. there can only be one field retroactively unionized).");
                     }
                 }
                 MKind::Group => panic!("Groups don't have ordinals."),

@@ -4,7 +4,7 @@
 
 use super::cursor::{Lexer, hex_val};
 
-impl<'a> Lexer<'a> {
+impl Lexer<'_> {
     pub(super) fn quoted_string(&mut self) -> Option<Vec<u8>> {
         debug_assert_eq!(self.peek(), Some(b'"'));
         self.pos += 1;
@@ -36,14 +36,14 @@ impl<'a> Lexer<'a> {
                             self.pos += 2;
                         }
                         b'0'..=b'7' => {
-                            let mut v = (e - b'0') as u32;
+                            let mut v = u32::from(e - b'0');
                             if let Some(d) = self.peek_at(1).filter(|c| (b'0'..=b'7').contains(c)) {
-                                v = (v << 3) | (d - b'0') as u32;
+                                v = (v << 3) | u32::from(d - b'0');
                                 self.pos += 1;
                                 if let Some(d) =
                                     self.peek_at(1).filter(|c| (b'0'..=b'7').contains(c))
                                 {
-                                    v = (v << 3) | (d - b'0') as u32;
+                                    v = (v << 3) | u32::from(d - b'0');
                                     self.pos += 1;
                                 }
                             }
@@ -96,34 +96,34 @@ impl<'a> Lexer<'a> {
     pub(super) fn integer(&mut self) -> Option<u64> {
         let start = self.pos;
         let c = self.peek()?;
-        let v: u64;
-        if c == b'0'
+
+        let v: u64 = if c == b'0'
             && self.peek_at(1) == Some(b'x')
             && self.peek_at(2).is_some_and(|c| c.is_ascii_hexdigit())
         {
             self.pos += 2;
             let mut r: u64 = 0;
             while let Some(d) = self.peek().filter(|c| c.is_ascii_hexdigit()) {
-                r = r.wrapping_mul(16).wrapping_add(hex_val(d) as u64);
+                r = r.wrapping_mul(16).wrapping_add(u64::from(hex_val(d)));
                 self.pos += 1;
             }
-            v = r;
+            r
         } else if c == b'0' {
             self.pos += 1;
             let mut r: u64 = 0;
             while let Some(d) = self.peek().filter(|c| (b'0'..=b'7').contains(c)) {
-                r = r.wrapping_mul(8).wrapping_add((d - b'0') as u64);
+                r = r.wrapping_mul(8).wrapping_add(u64::from(d - b'0'));
                 self.pos += 1;
             }
-            v = r;
+            r
         } else {
             let mut r: u64 = 0;
             while let Some(d) = self.peek().filter(|c| c.is_ascii_digit()) {
-                r = r.wrapping_mul(10).wrapping_add((d - b'0') as u64);
+                r = r.wrapping_mul(10).wrapping_add(u64::from(d - b'0'));
                 self.pos += 1;
             }
-            v = r;
-        }
+            r
+        };
         if self.not_looking_at_alpha() {
             Some(v)
         } else {

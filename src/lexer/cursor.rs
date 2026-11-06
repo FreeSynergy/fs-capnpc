@@ -33,7 +33,7 @@ pub(super) fn hex_val(c: u8) -> u8 {
     }
 }
 
-impl<'a> Lexer<'a> {
+impl Lexer<'_> {
     pub(super) fn peek(&self) -> Option<u8> {
         self.src.get(self.pos).copied()
     }

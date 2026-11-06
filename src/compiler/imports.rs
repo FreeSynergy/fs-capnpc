@@ -29,11 +29,21 @@ fn find_imports_expr(e: &Expression, out: &mut BTreeSet<String>) {
         ExprKind::Import(n) => {
             out.insert(n.clone());
         }
-        ExprKind::List(l) => l.iter().for_each(|x| find_imports_expr(x, out)),
-        ExprKind::Tuple(t) => t.iter().for_each(|p| find_imports_expr(&p.value, out)),
+        ExprKind::List(l) => {
+            for x in l {
+                find_imports_expr(x, out);
+            }
+        }
+        ExprKind::Tuple(t) => {
+            for p in t {
+                find_imports_expr(&p.value, out);
+            }
+        }
         ExprKind::Application { function, params } => {
             find_imports_expr(function, out);
-            params.iter().for_each(|p| find_imports_expr(&p.value, out));
+            for p in params {
+                find_imports_expr(&p.value, out);
+            }
         }
         ExprKind::Member { parent, .. } => find_imports_expr(parent, out),
         _ => {}
@@ -63,7 +73,9 @@ fn find_imports_decl(d: &Declaration, out: &mut BTreeSet<String>) {
         DeclBody::Const { ty, .. } => find_imports_expr(ty, out),
         DeclBody::Field { ty, .. } => find_imports_expr(ty, out),
         DeclBody::Interface { superclasses } => {
-            superclasses.iter().for_each(|s| find_imports_expr(s, out))
+            for s in superclasses {
+                find_imports_expr(s, out);
+            }
         }
         DeclBody::Method { params, results } => {
             find_imports_params(params, out);

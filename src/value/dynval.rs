@@ -20,14 +20,14 @@ pub(super) enum DynVal {
 
 pub(super) fn int_range(ty: &Type) -> Option<(i128, i128)> {
     Some(match ty {
-        Type::Int8 => (i8::MIN as i128, i8::MAX as i128),
-        Type::Int16 => (i16::MIN as i128, i16::MAX as i128),
-        Type::Int32 => (i32::MIN as i128, i32::MAX as i128),
-        Type::Int64 => (i64::MIN as i128, i64::MAX as i128),
-        Type::UInt8 => (0, u8::MAX as i128),
-        Type::UInt16 => (0, u16::MAX as i128),
-        Type::UInt32 => (0, u32::MAX as i128),
-        Type::UInt64 => (0, u64::MAX as i128),
+        Type::Int8 => (i128::from(i8::MIN), i128::from(i8::MAX)),
+        Type::Int16 => (i128::from(i16::MIN), i128::from(i16::MAX)),
+        Type::Int32 => (i128::from(i32::MIN), i128::from(i32::MAX)),
+        Type::Int64 => (i128::from(i64::MIN), i128::from(i64::MAX)),
+        Type::UInt8 => (0, i128::from(u8::MAX)),
+        Type::UInt16 => (0, i128::from(u16::MAX)),
+        Type::UInt32 => (0, i128::from(u32::MAX)),
+        Type::UInt64 => (0, i128::from(u64::MAX)),
         _ => return None,
     })
 }

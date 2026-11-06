@@ -6,7 +6,7 @@ use super::cursor::P;
 use crate::ast::*;
 use crate::error::Span;
 
-impl<'a> P<'a> {
+impl P<'_> {
     pub(super) fn param(&mut self) -> Option<Param> {
         let start = self.pos;
         let name = self.ident()?;

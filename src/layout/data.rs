@@ -13,7 +13,9 @@ pub(super) struct DataLocation {
 /// Reference to a scope in which fields are added.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Scope {
+    /// The struct body itself.
     Top,
+    /// The group with the given arena index.
     Group(usize),
 }
 

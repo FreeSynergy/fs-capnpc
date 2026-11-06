@@ -156,11 +156,9 @@ impl StructTranslator {
                 DeclBody::Union => {
                     let union_id = self.layout.new_union(scope);
                     let mut independent = 0u32;
-                    let target;
-                    let use_parent_order;
-                    if member.name.value.is_empty() {
-                        target = parent;
-                        use_parent_order = true;
+
+                    let (target, use_parent_order) = if member.name.value.is_empty() {
+                        (parent, true)
                     } else {
                         self.members[parent].child_count += 1;
                         let pnode = self.members[parent].node;
@@ -176,9 +174,8 @@ impl StructTranslator {
                         );
                         code_order += 1;
                         self.all_members.push(m);
-                        target = m;
-                        use_parent_order = false;
-                    }
+                        (m, false)
+                    };
                     self.members[target].union_scope = Some(union_id);
                     if use_parent_order {
                         self.traverse_union(

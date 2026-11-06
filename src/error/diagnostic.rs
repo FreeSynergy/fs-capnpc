@@ -1,32 +1,18 @@
-//! Diagnostics (counterpart of `error-reporter.c++`).
+//! One diagnostic with line/column rendering.
+//!
+//! Pattern: Adapter — turns (file, span, message) plus source text into a printable line.
 
+use super::span::Span;
 use std::fmt;
-
-/// A byte range inside one source file.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
-pub struct Span {
-    pub start: u32,
-    pub end: u32,
-}
-
-impl Span {
-    pub fn new(start: u32, end: u32) -> Self {
-        Span { start, end }
-    }
-    /// Smallest span covering both.
-    pub fn to(self, other: Span) -> Span {
-        Span {
-            start: self.start.min(other.start),
-            end: self.end.max(other.end),
-        }
-    }
-}
 
 /// One error message attached to a file and byte range.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Diagnostic {
+    /// Source file the message refers to.
     pub file: String,
+    /// Byte range within the file.
     pub span: Span,
+    /// Human-readable error text.
     pub message: String,
 }
 
@@ -68,36 +54,3 @@ pub fn line_col(src: &[u8], offset: usize) -> (usize, usize) {
     }
     (line, col)
 }
-
-/// Failure of a whole compilation: all collected diagnostics (rendered with source context).
-#[derive(Debug)]
-pub struct Error {
-    pub diagnostics: Vec<Diagnostic>,
-    pub rendered: Vec<String>,
-}
-
-impl Error {
-    pub fn single(message: impl Into<String>) -> Self {
-        let m = message.into();
-        Error {
-            diagnostics: vec![],
-            rendered: vec![m],
-        }
-    }
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for (i, line) in self.rendered.iter().enumerate() {
-            if i > 0 {
-                writeln!(f)?;
-            }
-            write!(f, "{line}")?;
-        }
-        Ok(())
-    }
-}
-
-impl std::error::Error for Error {}
-
-pub type Result<T> = std::result::Result<T, Error>;

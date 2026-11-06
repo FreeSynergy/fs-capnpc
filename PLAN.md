@@ -40,3 +40,4 @@ Versions: `capnp` 0.27.3, `capnpc` 0.27.0 (newest on crates.io, 2026-11); `capnp
 
 ## State
 - M1 lexer done (src/lexer.rs, src/error.rs). M2 parser + AST done (src/ast.rs, src/parser.rs). 11 unit tests.
+- Step 1 (ADR 0043 refactor) done: all modules are small directory modules; traits `SourceLoader`, `LexStage`/`ParseStage`/`Frontend`, `ErrorReporter`, `Emitter`; `CompileCommand` facade/builder. Pattern map in DESIGN.md. Checker: 0 errors.

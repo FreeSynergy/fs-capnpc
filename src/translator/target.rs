@@ -4,19 +4,32 @@
 
 use crate::ast::*;
 
+/// Declaration kind an annotation is applied to.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Target {
+    /// Applied to a file.
     File,
+    /// Applied to a constant.
     Const,
+    /// Applied to a enum.
     Enum,
+    /// Applied to a enumerant.
     Enumerant,
+    /// Applied to a struct.
     Struct,
+    /// Applied to a field.
     Field,
+    /// Applied to a union.
     Union,
+    /// Applied to a group.
     Group,
+    /// Applied to a interface.
     Interface,
+    /// Applied to a method.
     Method,
+    /// Applied to a method parameter.
     Param,
+    /// Applied to a annotation declaration.
     Annotation,
 }
 

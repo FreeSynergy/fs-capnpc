@@ -5,16 +5,16 @@
 use crate::compiler::kinds::*;
 use crate::compiler::loader_sim::LoaderSim;
 use crate::compiler::node_data::*;
-use crate::error::Diagnostic;
+use crate::error::{CollectingReporter, ErrorReporter};
 use crate::schema::{Id, Node, SourceInfo};
-use crate::source::SourceLoader;
+use crate::source::ModuleLoader;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
 /// The compiler state: node arena, id index, alias slots, loader and collected results.
 pub struct Compiler {
     /// Source loader owning all parsed modules.
-    pub loader: SourceLoader,
+    pub loader: ModuleLoader,
     /// Arena of declaration nodes indexed by `NodeIdx`.
     pub nodes: Vec<NodeData>,
     pub(super) nodes_by_id: HashMap<Id, usize>,
@@ -24,7 +24,7 @@ pub struct Compiler {
     pub(super) module_roots: HashMap<usize, usize>,
     pub(super) next_bogus_id: u64,
     /// Errors collected so far; compilation fails when non-empty.
-    pub diagnostics: Vec<Diagnostic>,
+    pub reporter: Box<dyn ErrorReporter>,
     /// Bootstrap-state schema nodes by id.
     pub bootstrap_by_id: HashMap<Id, Rc<Node>>,
     /// Finished schema nodes by id.
@@ -40,7 +40,7 @@ pub struct Compiler {
 
 impl Compiler {
     /// Create a compiler with the built-in declarations registered.
-    pub fn new(loader: SourceLoader) -> Self {
+    pub fn new(loader: ModuleLoader) -> Self {
         let mut c = Compiler {
             loader,
             nodes: vec![],
@@ -50,7 +50,7 @@ impl Compiler {
             builtins_by_kind: HashMap::new(),
             module_roots: HashMap::new(),
             next_bogus_id: 1000,
-            diagnostics: vec![],
+            reporter: Box::new(CollectingReporter::default()),
             bootstrap_by_id: HashMap::new(),
             final_by_id: HashMap::new(),
             sim: LoaderSim::default(),

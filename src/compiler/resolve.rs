@@ -75,14 +75,14 @@ impl Compiler {
     /// Resolve a declaration by schema id.
     pub fn resolve_id(&self, id: Id) -> ResolvedDecl {
         let n = self.find_node(id).expect("resolve_id: unknown id");
-        let pid = self.nodes[n].parent.map(|p| self.nodes[p].id).unwrap_or(0);
+        let pid = self.nodes[n].parent.map_or(0, |p| self.nodes[p].id);
         self.resolved(n, pid)
     }
 
     /// The resolved parent declaration of `node`, if any.
     pub fn get_parent(&self, node: NodeIdx) -> Option<ResolvedDecl> {
         self.nodes[node].parent.map(|p| {
-            let scope = self.nodes[p].parent.map(|g| self.nodes[g].id).unwrap_or(0);
+            let scope = self.nodes[p].parent.map_or(0, |g| self.nodes[g].id);
             self.resolved(p, scope)
         })
     }
@@ -98,7 +98,7 @@ impl Compiler {
         let module = self.nodes[node].module;
         let mut errs = vec![];
         let m = self.loader.import_relative(module, name, &mut errs);
-        self.diagnostics.extend(errs);
+        self.reporter.report_all(errs);
         let m = m?;
         let root = self.add_module(m);
         Some(self.resolved(root, 0))

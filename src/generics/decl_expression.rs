@@ -47,48 +47,32 @@ impl BrandScope {
                         });
                     }
                 }
-                match c.resolve(resolver, name) {
-                    Some(r) => {
-                        let result = self.interpret_resolve(c, &r, source);
-                        if let ResolveResult::Decl(d) = &r {
-                            c.report_resolution(
-                                self.module,
-                                source.span.start,
-                                source.span.end,
-                                d.id,
-                            );
-                        }
-                        Some(result)
+                if let Some(r) = c.resolve(resolver, name) {
+                    let result = self.interpret_resolve(c, &r, source);
+                    if let ResolveResult::Decl(d) = &r {
+                        c.report_resolution(self.module, source.span.start, source.span.end, d.id);
                     }
-                    None => {
-                        c.add_error(self.module, source.span, format!("Not defined: {name}"));
-                        None
-                    }
+                    Some(result)
+                } else {
+                    c.add_error(self.module, source.span, format!("Not defined: {name}"));
+                    None
                 }
             }
             ExprKind::AbsoluteName(name) => {
                 let top = c.get_top_scope(resolver);
-                match c.resolve_member(top.resolver, name) {
-                    Some(r) => {
-                        let result = self.interpret_resolve(c, &r, source);
-                        if let ResolveResult::Decl(d) = &r {
-                            c.report_resolution(
-                                self.module,
-                                source.span.start,
-                                source.span.end,
-                                d.id,
-                            );
-                        }
-                        Some(result)
+                if let Some(r) = c.resolve_member(top.resolver, name) {
+                    let result = self.interpret_resolve(c, &r, source);
+                    if let ResolveResult::Decl(d) = &r {
+                        c.report_resolution(self.module, source.span.start, source.span.end, d.id);
                     }
-                    None => {
-                        c.add_error(self.module, source.span, format!("Not defined: {name}"));
-                        None
-                    }
+                    Some(result)
+                } else {
+                    c.add_error(self.module, source.span, format!("Not defined: {name}"));
+                    None
                 }
             }
-            ExprKind::Import(filename) => match c.resolve_import(resolver, filename) {
-                Some(decl) => {
+            ExprKind::Import(filename) => {
+                if let Some(decl) = c.resolve_import(resolver, filename) {
                     c.report_resolution(self.module, source.span.start, source.span.end, decl.id);
                     let scope = BrandScope::new_root(
                         c,
@@ -102,8 +86,7 @@ impl BrandScope {
                         brand: Some(scope),
                         source: Some(Rc::new(source.clone())),
                     })
-                }
-                None => {
+                } else {
                     c.add_error(
                         self.module,
                         source.span,
@@ -111,7 +94,7 @@ impl BrandScope {
                     );
                     None
                 }
-            },
+            }
             ExprKind::Application { function, params } => {
                 let decl = self.compile_decl_expression(c, function, resolver, implicit)?;
                 let mut compiled = vec![];
@@ -135,30 +118,22 @@ impl BrandScope {
             }
             ExprKind::Member { parent, name } => {
                 let decl = self.compile_decl_expression(c, parent, resolver, implicit)?;
-                match decl.get_member(c, &name.value, source) {
-                    Some(m) => {
-                        if let Some(id) = m.generic_type_id() {
-                            c.report_resolution(
-                                self.module,
-                                source.span.start,
-                                source.span.end,
-                                id,
-                            );
-                        }
-                        Some(m)
+                if let Some(m) = decl.get_member(c, &name.value, source) {
+                    if let Some(id) = m.generic_type_id() {
+                        c.report_resolution(self.module, source.span.start, source.span.end, id);
                     }
-                    None => {
-                        c.add_error(
-                            self.module,
-                            name.span,
-                            format!(
-                                "'{}' has no member named '{}'",
-                                expression_string(parent),
-                                name.value
-                            ),
-                        );
-                        None
-                    }
+                    Some(m)
+                } else {
+                    c.add_error(
+                        self.module,
+                        name.span,
+                        format!(
+                            "'{}' has no member named '{}'",
+                            expression_string(parent),
+                            name.value
+                        ),
+                    );
+                    None
                 }
             }
         }
