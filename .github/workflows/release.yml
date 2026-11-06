@@ -1,0 +1,21 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    uses: FreeSynergy/fs-release/.github/workflows/release.yml@main
+    with:
+      binaries: capnp-compiler
+      kind: cli
+      app-id: net.freesynergy.CapnpCompiler
+      description: Cap'n Proto schema compiler in Rust
+    secrets:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
