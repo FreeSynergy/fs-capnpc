@@ -33,6 +33,14 @@ pub(crate) fn translate_params(
     };
     st.top.kind = NodeKind::Struct(StructNode::default());
     for (i, p) in params.iter().enumerate() {
+        // The reference compiler rejects this in its schema validation step.
+        if params[..i].iter().any(|q| q.name.value == p.name.value) {
+            c.add_error(
+                ts.module,
+                p.name.span,
+                format!("Duplicate declaration \"{}\".", p.name.value),
+            );
+        }
         st.members[0].child_count += 1;
         st.members.push(MemberInfo {
             parent: Some(0),

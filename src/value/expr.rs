@@ -139,16 +139,16 @@ impl Vt<'_> {
                 match ty {
                     Type::Text => Some(DynVal::Text(data)),
                     Type::Data => Some(DynVal::Data(data)),
-                    Type::Struct { type_id, .. } => match super::embed::decode_root_struct(&data) {
-                        Some(sv) => Some(DynVal::Struct(*type_id, sv)),
-                        None => {
+                    Type::Struct { type_id, .. } => {
+                        let decoded = super::embed::decode_root_struct(&data);
+                        if decoded.is_none() {
                             self.err(
                                 src.span,
                                 "Embedded file is not a valid Cap'n Proto message.",
                             );
-                            None
                         }
-                    },
+                        decoded.map(|sv| DynVal::Struct(*type_id, sv))
+                    }
                     _ => {
                         self.err(
                             src.span,

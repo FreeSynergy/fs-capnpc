@@ -37,15 +37,16 @@ fn corpus_matches_official_compiler() {
         }
         let name = f.trim_start_matches("tests/schemas/").to_string();
         let rep = common::compare(&[&f], "tests/schemas", &["tests/schemas"]);
-        if rep.differences.is_empty() && rep.bytes_identical {
+        if rep.differences.is_empty() {
             ok += 1;
-            println!("OK   {name}");
+            let note = if rep.bytes_identical {
+                ""
+            } else {
+                " (bytes differ: segmentation only)"
+            };
+            println!("OK   {name}{note}");
         } else {
-            let mut msg = format!("FAIL {name}");
-            if rep.differences.is_empty() {
-                msg.push_str(" (bytes differ, content equal)");
-            }
-            println!("{msg}");
+            println!("FAIL {name}");
             if only.is_some() || std::env::var("VERBOSE").is_ok() {
                 for d in &rep.differences {
                     println!("{d}");

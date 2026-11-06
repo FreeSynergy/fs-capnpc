@@ -11,7 +11,7 @@ struct Message {
 
 /// Decode a standard-framed message and return its root struct.
 pub(super) fn decode_root_struct(data: &[u8]) -> Option<StructVal> {
-    if data.len() % 8 != 0 || data.len() < 8 {
+    if !data.len().is_multiple_of(8) || data.len() < 8 {
         return None;
     }
     let count = u32::from_le_bytes(data[0..4].try_into().ok()?) as usize + 1;
@@ -23,8 +23,10 @@ pub(super) fn decode_root_struct(data: &[u8]) -> Option<StructVal> {
         let bytes = data.get(pos..pos + size * 8)?;
         segments.push(
             bytes
-                .chunks_exact(8)
-                .map(|c| u64::from_le_bytes(c.try_into().unwrap_or_default()))
+                .as_chunks::<8>()
+                .0
+                .iter()
+                .map(|c| u64::from_le_bytes(*c))
                 .collect(),
         );
         pos += size * 8;
@@ -82,7 +84,7 @@ impl Message {
     fn read_target(&self, seg: usize, start: i64, word: u64, depth: u32) -> Option<Ptr> {
         let dw = (word >> 32) & 0xffff;
         let pc = word >> 48;
-        if word & 3 == 0 {
+        if word.trailing_zeros() >= 2 {
             return self.read_struct(seg, start, dw, pc, depth).map(Ptr::Struct);
         }
         let count = (word >> 35) as usize;

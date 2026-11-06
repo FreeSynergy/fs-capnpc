@@ -2,6 +2,8 @@
 //! capnp-compiler, then compare the `CodeGeneratorRequest`s.
 #![allow(dead_code)]
 
+mod codegen;
+
 use capnp_compiler::schema_capnp::code_generator_request;
 use capnp_compiler::{CompileOptions, compile_files, request};
 use std::path::Path;
@@ -149,6 +151,11 @@ pub fn compare(files: &[&str], src_prefix: &str, imports: &[&str]) -> Report {
         ));
     } else if order_a != order_b {
         rep.differences.push("sourceInfo order differs".into());
+    }
+    if rep.differences.is_empty() {
+        let tag = format!("{:x}", a.len() ^ files.len());
+        rep.differences
+            .extend(codegen::diff_generated(&a, &b, &tag));
     }
     rep
 }
