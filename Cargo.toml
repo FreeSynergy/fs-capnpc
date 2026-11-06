@@ -1,0 +1,25 @@
+[package]
+name = "capnp-compiler"
+version = "0.1.0"
+edition = "2024"
+description = "A Cap'n Proto schema compiler in pure Rust: parses .capnp files and produces the CodeGeneratorRequest used by capnpc"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/FreeSynergy/fs-capnpc"
+readme = "README.md"
+keywords = ["capnp", "capnproto", "schema", "compiler", "codegen"]
+categories = ["development-tools", "encoding", "parser-implementations"]
+
+[lib]
+name = "capnp_compiler"
+path = "src/lib.rs"
+
+[[bin]]
+name = "capnp-compiler"
+path = "src/main.rs"
+
+[dependencies]
+capnp = "0.27.3"
+capnpc = "0.27.0"
+
+[dev-dependencies]
+capnpc-embedded = "0.2.0+1.4.0"
