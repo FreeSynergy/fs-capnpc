@@ -6,6 +6,7 @@ description = "A Cap'n Proto schema compiler in pure Rust: parses .capnp files a
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/FreeSynergy/fs-capnpc"
 readme = "README.md"
+include = ["/src/**", "/std/**", "/examples/**", "/Cargo.toml", "/README.md", "/CHANGELOG.md", "/NOTICE", "/LICENSE-MIT", "/LICENSE-APACHE"]
 keywords = ["capnp", "capnproto", "schema", "compiler", "codegen"]
 categories = ["development-tools", "encoding", "parser-implementations"]
 

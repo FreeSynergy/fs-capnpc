@@ -8,3 +8,9 @@ re-implemented in Rust:
   and other contributors. Licensed under the MIT License. https://capnproto.org
 
 Thank you to everyone who built Cap'n Proto and capnproto-rust.
+
+The files under std/capnp/ (the Cap'n Proto standard schema files) are included unchanged from the
+Cap'n Proto distribution so that imports such as "/capnp/c++.capnp" resolve exactly as with the
+official compiler. They remain under the MIT License of the Cap'n Proto project (copyright as above);
+std/capnp/rust.capnp comes from capnproto-rust (MIT, David Renshaw and contributors).
+
