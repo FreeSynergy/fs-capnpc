@@ -17,6 +17,7 @@ mod struct_schema;
 mod struct_state;
 mod struct_translate;
 mod struct_traverse;
+mod struct_union;
 mod structs;
 mod target;
 mod values;

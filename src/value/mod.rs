@@ -10,6 +10,7 @@ mod convert;
 mod dynval;
 mod embed;
 mod expr;
+mod expr_inner;
 mod lists;
 mod structs;
 mod subst;

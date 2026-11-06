@@ -6,6 +6,7 @@
 //! Pattern: Facade — this module only declares sub-modules and re-exports the public API.
 
 mod annotation;
+mod base_expression;
 mod cursor;
 mod declaration;
 mod expression;

@@ -12,6 +12,7 @@
 mod allocator;
 mod data;
 mod expand;
+mod expand_data;
 mod holes;
 #[cfg(test)]
 mod tests;
