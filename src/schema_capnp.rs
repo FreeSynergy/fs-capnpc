@@ -9281,6 +9281,14 @@ pub mod value {
     }
 
     impl <'a,> Builder<'a,>  {
+        /// Select union variant `discriminant` (a pointer type) and leave its pointer null.
+        #[inline]
+        pub fn set_null_variant(&mut self, discriminant: u16) {
+            self.builder.set_data_field::<u16>(0, discriminant);
+            let mut p = self.builder.reborrow().get_pointer_field(0);
+            p.clear();
+        }
+
         pub fn into_reader(self) -> Reader<'a,> {
             self.builder.into_reader().into()
         }

@@ -3,7 +3,7 @@
 use std::fmt;
 
 /// A byte range inside one source file.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub struct Span {
     pub start: u32,
     pub end: u32,
