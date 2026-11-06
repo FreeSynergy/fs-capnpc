@@ -1,7 +1,7 @@
 //! `capnp-compiler` command line entry point.
 //!
-//! Pattern: Facade — the binary only forwards to the library; the CLI is implemented later.
+//! Pattern: Facade — the binary only forwards to [`capnp_compiler::cli::run`].
 
 fn main() {
-    println!("usage: capnp-compiler [options] <schema files>");
+    std::process::exit(capnp_compiler::cli::run(std::env::args().skip(1)));
 }

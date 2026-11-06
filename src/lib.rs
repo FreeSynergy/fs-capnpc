@@ -64,10 +64,12 @@
 )]
 
 pub mod ast;
+pub mod cli;
 pub mod command;
 pub mod compiler;
 pub mod error;
 pub mod generics;
+mod hashmath;
 pub mod hashorder;
 pub mod ids;
 pub mod layout;

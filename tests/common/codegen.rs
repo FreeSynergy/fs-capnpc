@@ -31,7 +31,10 @@ pub fn diff_generated(oracle: &[u8], mine: &[u8], tag: &str) -> Option<String> {
     // A schema capnpc cannot generate code for must fail identically for both requests.
     let (a, b) = match (a, b) {
         (Ok(a), Ok(b)) => (a, b),
-        (Err(x), Err(y)) if x == y => return None,
+        (Err(x), Err(y)) if x == y => {
+            println!("     (capnpc cannot generate code: {x})");
+            return None;
+        }
         (x, y) => return Some(format!("code generation results differ: {x:?} vs {y:?}")),
     };
     if a.keys().ne(b.keys()) {
