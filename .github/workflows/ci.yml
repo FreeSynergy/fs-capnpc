@@ -11,4 +11,4 @@ jobs:
   ci:
     uses: FreeSynergy/fs-release/.github/workflows/ci.yml@main
     with:
-      msrv: "1.85"
+      msrv: "1.88"

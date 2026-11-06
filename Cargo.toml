@@ -2,6 +2,7 @@
 name = "capnp-compiler"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.88"
 description = "A Cap'n Proto schema compiler in pure Rust: parses .capnp files and produces the CodeGeneratorRequest used by capnpc"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/FreeSynergy/fs-capnpc"
