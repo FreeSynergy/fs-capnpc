@@ -1,6 +1,7 @@
 //! Parsed representation of a schema file (counterpart of `grammar.capnp`).
 
 use crate::error::Span;
+use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Located<T> {
@@ -135,7 +136,7 @@ pub struct Declaration {
     pub name: Located<String>,
     pub id: DeclId,
     pub parameters: Vec<BrandParameter>,
-    pub nested: Vec<Declaration>,
+    pub nested: Vec<Rc<Declaration>>,
     pub annotations: Vec<AnnotationApplication>,
     pub span: Span,
     pub doc_comment: Option<String>,

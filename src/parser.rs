@@ -9,7 +9,7 @@ use crate::lexer::{Body, Statement, Tok, Token};
 
 /// The parsed file: a root [`Declaration`] of kind [`DeclBody::File`].
 pub struct ParsedFile {
-    pub root: Declaration,
+    pub root: std::rc::Rc<Declaration>,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -39,7 +39,7 @@ fn generate_random_id() -> u64 {
 /// Parse the statements of a file. Errors are appended to the returned list.
 pub fn parse_file(statements: &[Statement], file: &str, require_id: bool) -> (ParsedFile, Vec<Diagnostic>) {
     let mut ctx = Ctx { file: file.to_string(), errors: vec![] };
-    let mut decls: Vec<Declaration> = vec![];
+    let mut decls: Vec<std::rc::Rc<Declaration>> = vec![];
     let mut annotations = vec![];
     let mut file_id: Option<Located<u64>> = None;
     let mut file_doc: Option<String> = None;
@@ -58,7 +58,7 @@ pub fn parse_file(statements: &[Statement], file: &str, require_id: bool) -> (Pa
                 }
             }
             Parsed::NakedAnnotation(a) => annotations.push(a),
-            Parsed::Decl(d) => decls.push(d),
+            Parsed::Decl(d) => decls.push(std::rc::Rc::new(d)),
         }
     }
 
@@ -88,7 +88,7 @@ pub fn parse_file(statements: &[Statement], file: &str, require_id: bool) -> (Pa
         doc_comment: file_doc,
         body: DeclBody::File,
     };
-    (ParsedFile { root }, ctx.errors)
+    (ParsedFile { root: std::rc::Rc::new(root) }, ctx.errors)
 }
 
 struct Ctx {
@@ -148,7 +148,7 @@ impl Ctx {
                     }
                 }
                 if let Parsed::Decl(d) = &mut parsed {
-                    d.nested = nested;
+                    d.nested = nested.into_iter().map(std::rc::Rc::new).collect();
                 }
             }
             (Body::Block(_), None) => {

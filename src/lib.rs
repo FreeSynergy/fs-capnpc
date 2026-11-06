@@ -5,6 +5,8 @@ pub mod error;
 pub mod ids;
 pub mod layout;
 pub mod lexer;
+pub mod schema;
+pub mod source;
 pub mod parser;
 #[allow(clippy::all, clippy::pedantic)]
 #[rustfmt::skip]
