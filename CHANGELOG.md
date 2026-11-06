@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 — 2026-11-06
+
+- Package metadata: `rust-version = 1.88`, `authors`, security contact; release packages via fs-release (Linux, Windows, macOS), SPDX SBOM, OpenPGP signatures.
+
 ## 0.1.0 (unreleased)
 
 - Pure Rust lexer, parser and compiler for the full Cap'n Proto schema language: structs, unions,
