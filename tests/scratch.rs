@@ -1,9 +1,11 @@
+mod common;
 #[test]
-fn builtin_ids() {
-    let bytes = capnpc_embedded::CompileCommand::new().src_prefix("tests/schemas").file("tests/schemas/builtins.capnp").compile().unwrap();
-    let r = capnp::serialize::read_message(&bytes[..], Default::default()).unwrap();
-    let req: capnp_compiler::schema_capnp::code_generator_request::Reader = r.get_root().unwrap();
-    let f = req.get_requested_files().unwrap().get(0);
-    let ids: Vec<u64> = f.get_file_source_info().unwrap().get_identifiers().unwrap().iter().map(|i| match i.which().unwrap() { capnp_compiler::schema_capnp::code_generator_request::requested_file::file_source_info::identifier::Which::TypeId(t) => t, _ => 0 }).collect();
-    println!("IDS {:?}", ids);
+fn dump_words() {
+    let a = common::oracle_bytes(&["tests/schemas/doc.capnp"], "tests/schemas", &[]);
+    let words: Vec<u64> = a[8..].chunks(8).map(|c| u64::from_le_bytes(c.try_into().unwrap())).collect();
+    for (i, w) in words.iter().enumerate().skip(words.len().saturating_sub(250)) {
+        let b = w.to_le_bytes();
+        let txt: String = b.iter().map(|&c| if (32..127).contains(&c) { c as char } else { '.' }).collect();
+        println!("W{:3} {:016x} {}", i, w, txt);
+    }
 }

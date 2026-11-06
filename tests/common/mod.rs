@@ -138,4 +138,5 @@ pub fn assert_same(files: &[&str], src_prefix: &str, imports: &[&str]) {
     if !rep.differences.is_empty() {
         panic!("{} differences:\n{}", rep.differences.len(), rep.differences.join("\n---\n"));
     }
+    assert!(rep.bytes_identical, "semantically equal but the encoded bytes differ");
 }
