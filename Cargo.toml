@@ -1,6 +1,6 @@
 [package]
 name = "capnp-compiler"
-version = "0.1.1"
+version = "0.0.1"
 edition = "2024"
 rust-version = "1.88"
 authors = ["FreeSynergy contributors <support@freesynergy.net>"]
