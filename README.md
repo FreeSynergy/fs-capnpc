@@ -8,7 +8,7 @@ What is different here: we do not ask you to trust it. Its output is compared wi
 
 ## What it can do today
 
-Latest tag: `v0.1.1`.
+Latest tag: `v0.0.1`.
 
 - A command line, `capnp-compiler compile`, with output folder, import paths and source prefix.
 - A library with a builder, so schemas can come from memory and errors can be collected elsewhere.
