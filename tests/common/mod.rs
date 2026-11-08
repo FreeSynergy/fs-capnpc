@@ -1,6 +1,7 @@
 //! Oracle comparison helpers: compile with the official compiler (capnpc-embedded) and with
 //! capnp-compiler, then compare the `CodeGeneratorRequest`s.
 #![allow(dead_code)]
+use std::fmt::Write as _;
 
 mod codegen;
 
@@ -48,6 +49,7 @@ pub struct Report {
 }
 
 /// Compare node by node (output order) and the rest of the request.
+#[allow(clippy::too_many_lines)] // one linear comparison script; splitting would only scatter it
 pub fn compare(files: &[&str], src_prefix: &str, imports: &[&str]) -> Report {
     let a = oracle_bytes(files, src_prefix, imports);
     let b = match mine_bytes(files, src_prefix, imports) {
@@ -169,13 +171,14 @@ pub fn first_diff(a: &str, b: &str) -> String {
             let mut out = String::new();
             out.push_str("  context (oracle):\n");
             for l in &la[ctx_start..(i + 3).min(la.len())] {
-                out.push_str(&format!("    {l}\n"));
+                let _ = writeln!(out, "    {l}");
             }
-            out.push_str(&format!(
+            let _ = write!(
+                out,
                 "  oracle: {:?}\n  mine:   {:?}\n",
                 la.get(i),
                 lb.get(i)
-            ));
+            );
             return out;
         }
     }
