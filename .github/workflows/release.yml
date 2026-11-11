@@ -9,6 +9,10 @@ permissions:
   attestations: write
   packages: write   # required by the optional container job (GitHub checks it even when skipped)
 
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: false
+
 jobs:
   release:
     uses: FreeSynergy/fs-release/.github/workflows/release.yml@main
